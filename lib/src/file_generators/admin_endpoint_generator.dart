@@ -8,11 +8,7 @@ class AdminEndpointGenerator extends FileGenerator {
   final String serverPackageName;
   final List<ServerpodEntity> entities;
 
-  AdminEndpointGenerator({
-    required this.serverPath,
-    required this.entities,
-    required this.serverPackageName,
-  });
+  AdminEndpointGenerator({required this.serverPath, required this.entities, required this.serverPackageName});
 
   @override
   String get path => '$serverPath/lib/src/admin/generated/admin_endpoint.dart';

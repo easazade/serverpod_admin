@@ -10,7 +10,8 @@ class ServerpodException extends ServerpodEntity {
 
     return ServerpodException(
       name: json['exception'].toString(),
-      fields: fieldsJson?.entries.map((e) {
+      fields:
+          fieldsJson?.entries.map((e) {
             return ParsedField.from(name: e.key, typeAndProperties: e.value.toString());
           }).toList() ??
           [],

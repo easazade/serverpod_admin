@@ -5,12 +5,7 @@ class Relation {
   final String? parent;
   final bool isOptional;
 
-  Relation({
-    this.name,
-    this.field,
-    this.parent,
-    required this.isOptional,
-  });
+  Relation({this.name, this.field, this.parent, required this.isOptional});
 
   @override
   String toString() {
@@ -71,12 +66,7 @@ class ParsedField {
   final List<String> meta;
   final Relation? relation;
 
-  ParsedField({
-    required this.name,
-    required this.type,
-    required this.meta,
-    this.relation,
-  });
+  ParsedField({required this.name, required this.type, required this.meta, this.relation});
 
   @override
   String toString() => 'ParsedField(name: "$name", type: "$type", meta: $meta, relation: $relation)';
@@ -84,10 +74,7 @@ class ParsedField {
   /// Parses a definition string of the form:
   ///   name: type, meta1=value, flagMeta, relation(...)
   /// and returns a [ParsedField] with any relation extracted.
-  static ParsedField from({
-    required String name,
-    required String typeAndProperties,
-  }) {
+  static ParsedField from({required String name, required String typeAndProperties}) {
     // Helper to split at top-level commas (ignoring commas inside <>, {}, ())
     List<String> splitTopLevel(String str) {
       final segments = <String>[];

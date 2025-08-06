@@ -11,9 +11,7 @@ Future<Map<String, dynamic>> readJsonOrYamlFile(File file) async {
     return _readJsonOrYaml(fileContent);
   } catch (e, _) {
     print(e);
-    throw Exception(
-      'Unsupported File: make sure the file content is in correct json or yaml format',
-    );
+    throw Exception('Unsupported File: make sure the file content is in correct json or yaml format');
   }
 }
 

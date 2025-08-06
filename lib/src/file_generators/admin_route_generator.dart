@@ -11,11 +11,7 @@ class AdminRouteGenerator extends FileGenerator {
   final String serverPackageName;
   final List<ServerpodEntity> entities;
 
-  AdminRouteGenerator({
-    required this.serverPath,
-    required this.entities,
-    required this.serverPackageName,
-  });
+  AdminRouteGenerator({required this.serverPath, required this.entities, required this.serverPackageName});
 
   @override
   String get path => '$serverPath/lib/src/web/routes/admin/admin_route.dart';
