@@ -24,6 +24,25 @@ class AdminUtilsGenerator extends FileGenerator {
   @override
   String get path => '$serverPath/lib/src/web/utils/admin/admin_utils.dart';
 
+  String? includeValueForResource(ServerpodClass modelClass, List<ServerpodClass> allClasses) {
+    final allClassNames = allClasses.map((e) => e.name).toList();
+    final relatedFields = modelClass.fields.where((field) => allClassNames.contains(field.type.replaceAll('?', ''))).toList();
+
+    // if there is no relations then there is no ClassInclude value needed either
+    if (relatedFields.isEmpty) {
+      return null;
+    }
+
+    final buffer = StringBuffer();
+    buffer.writeln('${modelClass.name.pascalCase}.include(');
+    for (var relatedField in relatedFields) {
+      buffer.writeln('  ${relatedField.name}: ${relatedField.type.replaceAll('?', '').pascalCase}.include(),');
+    }
+    buffer.writeln(')');
+
+    return buffer.toString();
+  }
+
   @override
   Future<String> fileContent() async {
     final buffer = StringBuffer();
@@ -40,38 +59,47 @@ class AdminUtilsGenerator extends FileGenerator {
 
     buffer.writeln('final modelsMap = <String, dynamic>{'); // map of models start
     final classes = entities.whereClassWithTables();
+    final classNames = classes.map((e) => e.name).toList();
 
     for (var entity in classes) {
       if (entity.fields.firstWhereOrNull((field) => field.name == 'id') == null) {
-        entity.fields.insert(
-            0,
-            ParsedField(
-              name: 'id',
-              type: 'int?',
-              meta: ['defaultPersist=serial'],
-              relation: null,
-            ));
+        entity.fields.insert(0, ParsedField(name: 'id', type: 'int?', meta: ['defaultPersist=serial'], relation: null));
       }
 
-      buffer.writeln(
-        '''
+      // in the schema section below there is a relation defined on the class type. it is required to add a the field for
+      // foreign id to the schema as well.
+      buffer.writeln('''
         "${entity.name.toLowerCase()}": {
           "table": "${entity.table != null ? "${entity.table}" : "null"}", 
           "class": "${entity.name}",
           "columns": [${entity.fields.map((e) => e.name).toList().map((e) => '"$e"').join(',')}],
-          "schema": {${entity.fields.toList().map(
-              (parsedField) => ' "${parsedField.name}": "${parsedField.type}" ',
-            ).join(',')}},
+          "schema": {${entity.fields.toList().map((parsedField) {
+        var typeMapping = ' "${parsedField.name}": "${parsedField.type}" ';
+
+        final nonNullableFieldType = parsedField.type.replaceAll('?', '');
+        if (classNames.contains(nonNullableFieldType) && parsedField.relation?.field == null) {
+          final foreignKeyFieldName = '${parsedField.name.camelCase}Id';
+
+          final relatedClassEntity = classes.firstWhereOrNull((e) => e.name == parsedField.type.replaceAll('?', ''));
+          final idTypeOfRelatedClass = relatedClassEntity?.fields.firstWhereOrNull((field) => field.name == 'id')?.type.replaceAll('?', '') ?? 'int';
+
+          final foreignKeyFieldType = parsedField.relation?.isOptional == true ? "$idTypeOfRelatedClass?" : idTypeOfRelatedClass;
+
+          return '$typeMapping, "$foreignKeyFieldName": "$foreignKeyFieldType"';
+        }
+
+        return typeMapping;
+      }).join(',')}},
         },
-        ''',
-      );
+        ''');
     }
     buffer.writeln('};'); // map of models end
 
     buffer.writeln('\n\n'); // adding empty space;
 
     buffer.writeln(
-        'Future<Map<String, dynamic>?> findResourceById(Session session, String resource, dynamic id,) async{'); // findResourceById() start
+      'Future<Map<String, dynamic>?> findResourceById(Session session, String resource, dynamic id,) async{',
+    ); // findResourceById() start
     buffer.writeln('final isIdInteger = int.tryParse(id.toString()) != null;');
 
     buffer.writeln('if(isIdInteger) {');
@@ -82,7 +110,10 @@ class AdminUtilsGenerator extends FileGenerator {
 
     for (final entity in classes) {
       buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}"){');
-      buffer.writeln('  return (await ${entity.name.pascalCase}.db.findById(session, id))?.toJson();');
+      final includeParameterValue = includeValueForResource(entity, classes);
+      final includeParameter = includeParameterValue != null ? ', include: $includeParameterValue' : '';
+
+      buffer.writeln('  return (await ${entity.name.pascalCase}.db.findById(session, id $includeParameter))?.toJson();');
       buffer.writeln('}\n');
     }
 
@@ -99,7 +130,8 @@ class AdminUtilsGenerator extends FileGenerator {
     buffer.writeln('}'); // listResources() end
 
     buffer.writeln(
-        'Future<Map<String, dynamic>> insertOrUpdateResource(Session session, String resource, Map<String, dynamic> json, dynamic id,) async {'); // insertOrUpdateResource() start
+      'Future<Map<String, dynamic>> insertOrUpdateResource(Session session, String resource, Map<String, dynamic> json, dynamic id,) async {',
+    ); // insertOrUpdateResource() start
 
     buffer.writeln('final isIdInteger = int.tryParse(id?.toString() ?? "") != null;');
     buffer.writeln('if (isIdInteger) {');
@@ -127,7 +159,8 @@ class AdminUtilsGenerator extends FileGenerator {
     buffer.writeln('}'); // insertOrUpdateResource() end
 
     buffer.writeln(
-        'Future<Map<String, dynamic>> deleteResource(Session session, String resource, dynamic id) async {'); // deleteResource() start
+      'Future<Map<String, dynamic>> deleteResource(Session session, String resource, dynamic id) async {',
+    ); // deleteResource() start
 
     buffer.writeln('final isIdInteger = int.tryParse(id.toString()) != null;');
     buffer.writeln('if(isIdInteger) {');
