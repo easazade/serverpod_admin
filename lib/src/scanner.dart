@@ -21,12 +21,12 @@ class ModuleInfo {
   ModuleInfo({required this.directory, required this.import});
 }
 
-class ServerpodYamlReader {
+class ServerpodScanner {
   final String serverPath;
 
-  ServerpodYamlReader({required this.serverPath});
+  ServerpodScanner({required this.serverPath});
 
-  Future<ReadResult> read() async {
+  Future<ReadResult> scan() async {
     final entities = <ServerpodEntity>[];
     final spyFiles = <File>[];
 
