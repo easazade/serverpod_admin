@@ -41,9 +41,7 @@ class ServerpodYamlReader {
       final files = directory
           .listSync(recursive: true)
           .map((systemFile) => File(systemFile.path))
-          .where(
-            (file) => file.path.endsWith('.spy.yaml') || file.path.endsWith('.spy.yml'),
-          )
+          .where((file) => file.path.endsWith('.spy.yaml') || file.path.endsWith('.spy.yml'))
           .toList();
 
       spyFiles.addAll(files);
@@ -53,9 +51,7 @@ class ServerpodYamlReader {
       print(spyFile.path);
     }
 
-    final jsonEntities = await Future.wait(
-      spyFiles.map((file) => readJsonOrYamlFile(file)).toList(),
-    );
+    final jsonEntities = await Future.wait(spyFiles.map((file) => readJsonOrYamlFile(file)).toList());
 
     for (var json in jsonEntities) {
       print(json["class"]);
@@ -81,7 +77,10 @@ Future<List<ModuleInfo>> getServerpodModulesDirectories(String serverPath) async
 
   serverpodPackages.removeWhere((entry) {
     final packageName = entry.key;
-    return packageName == 'serverpod_test' || packageName == 'serverpod_lints' || packageName == 'serverpod_serialization';
+    return packageName == 'serverpod_test' ||
+        packageName == 'serverpod_lints' ||
+        packageName == 'serverpod_serialization' ||
+        packageName == 'serverpod_admin';
   });
 
   List<ModuleInfo> moduleInfos = [];
