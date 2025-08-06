@@ -19,12 +19,16 @@ include: package:lints/recommended.yaml
 #   rules:
 #     - camel_case_types
 
-# analyzer:
-#   exclude:
-#     - path/to/excluded/files/**
-
+analyzer:
+  exclude:
+    - lib/src/generated/**
+    - test/integration/test_tools/serverpod_test_tools.dart
 # For more information about the core and recommended set of lints, see
 # https://dart.dev/go/core-lints
 
 # For additional information about configuring this file, see
 # https://dart.dev/guides/language/analysis-options
+
+formatter:
+  page_width: 140
+  trailing_commas: automate

@@ -1,0 +1,158 @@
+// ignore_for_file: unused_import
+
+import 'package:collection/collection.dart';
+import 'package:recase/recase.dart';
+
+import '../meta/serverpod_entity.dart';
+import '../utils/file_generator.dart';
+import '../utils/parsed_field.dart';
+import '../utils_function.dart';
+
+class AdminUtilsGenerator extends FileGenerator {
+  final String serverPath;
+  final String serverPackageName;
+  final List<ServerpodEntity> entities;
+  final List<String> serverpodModuleImports;
+
+  AdminUtilsGenerator({
+    required this.serverPath,
+    required this.entities,
+    required this.serverPackageName,
+    required this.serverpodModuleImports,
+  });
+
+  @override
+  String get path => '$serverPath/lib/src/web/utils/admin/admin_utils.dart';
+
+  @override
+  Future<String> fileContent() async {
+    final buffer = StringBuffer();
+
+    buffer.writeln('// ignore_for_file: depend_on_referenced_packages'); // ignored lint rule
+    buffer.writeln("import 'package:$serverPackageName/src/generated/protocol.dart';"); // import
+    buffer.writeln("import 'package:uuid/v7.dart';"); // import
+    buffer.writeln("import 'package:serverpod/serverpod.dart';"); // import
+    buffer.writeln("import 'package:serverpod/protocol.dart';"); // import
+
+    for (var import in serverpodModuleImports) {
+      buffer.writeln(import);
+    }
+
+    buffer.writeln('final modelsMap = <String, dynamic>{'); // map of models start
+    final classes = entities.whereClassWithTables();
+
+    for (var entity in classes) {
+      if (entity.fields.firstWhereOrNull((field) => field.name == 'id') == null) {
+        entity.fields.insert(
+            0,
+            ParsedField(
+              name: 'id',
+              type: 'int?',
+              meta: ['defaultPersist=serial'],
+              relation: null,
+            ));
+      }
+
+      buffer.writeln(
+        '''
+        "${entity.name.toLowerCase()}": {
+          "table": "${entity.table != null ? "${entity.table}" : "null"}", 
+          "class": "${entity.name}",
+          "columns": [${entity.fields.map((e) => e.name).toList().map((e) => '"$e"').join(',')}],
+          "schema": {${entity.fields.toList().map(
+              (parsedField) => ' "${parsedField.name}": "${parsedField.type}" ',
+            ).join(',')}},
+        },
+        ''',
+      );
+    }
+    buffer.writeln('};'); // map of models end
+
+    buffer.writeln('\n\n'); // adding empty space;
+
+    buffer.writeln(
+        'Future<Map<String, dynamic>?> findResourceById(Session session, String resource, dynamic id,) async{'); // findResourceById() start
+    buffer.writeln('final isIdInteger = int.tryParse(id.toString()) != null;');
+
+    buffer.writeln('if(isIdInteger) {');
+    buffer.writeln('  id = int.tryParse(id.toString());');
+    buffer.writeln('} else {');
+    buffer.writeln('  id = UuidValue.fromString(id);');
+    buffer.writeln('}');
+
+    for (final entity in classes) {
+      buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}"){');
+      buffer.writeln('  return (await ${entity.name.pascalCase}.db.findById(session, id))?.toJson();');
+      buffer.writeln('}\n');
+    }
+
+    buffer.writeln("throw Exception('Could not find any resource called \$resource');");
+    buffer.writeln('}'); // findResourceById() end
+
+    buffer.writeln('Future<List<Map<String, dynamic>>> listResources(Session session, String resource) async {'); // listResources() start
+    for (final entity in classes) {
+      buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}"){');
+      buffer.writeln('  return (await ${entity.name.pascalCase}.db.find(session)).map((e)=> e.toJson()).toList();');
+      buffer.writeln('}\n');
+    }
+    buffer.writeln("throw Exception('Could not find any resource called \$resource');");
+    buffer.writeln('}'); // listResources() end
+
+    buffer.writeln(
+        'Future<Map<String, dynamic>> insertOrUpdateResource(Session session, String resource, Map<String, dynamic> json, dynamic id,) async {'); // insertOrUpdateResource() start
+
+    buffer.writeln('final isIdInteger = int.tryParse(id?.toString() ?? "") != null;');
+    buffer.writeln('if (isIdInteger) {');
+    buffer.writeln('  id = int.tryParse(id.toString());');
+    buffer.writeln('} else if(id != null) {');
+    buffer.writeln('  id = UuidValue.fromString(id);');
+    buffer.writeln('}');
+
+    for (final entity in classes) {
+      buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}"){');
+      buffer.writeln('  if(json["id"] == null) {');
+      buffer.writeln('    json["id"] = newIdForResource(resource);');
+      buffer.writeln('  }');
+      buffer.writeln('  final row = ${entity.name.pascalCase}.fromJson(json);');
+      buffer.writeln('  final isInDb = id != null && (await ${entity.name.pascalCase}.db.findById(session, id)) != null;');
+      buffer.writeln('  if(isInDb) {');
+      buffer.writeln('    return (await ${entity.name.pascalCase}.db.updateRow(session, row)).toJson();');
+      buffer.writeln('  } else {');
+      buffer.writeln('    return (await ${entity.name.pascalCase}.db.insertRow(session, row)).toJson();');
+      buffer.writeln('  }');
+      buffer.writeln('}\n');
+    }
+
+    buffer.writeln("throw Exception('Could not find any resource called \$resource');");
+    buffer.writeln('}'); // insertOrUpdateResource() end
+
+    buffer.writeln(
+        'Future<Map<String, dynamic>> deleteResource(Session session, String resource, dynamic id) async {'); // deleteResource() start
+
+    buffer.writeln('final isIdInteger = int.tryParse(id.toString()) != null;');
+    buffer.writeln('if(isIdInteger) {');
+    buffer.writeln('  id = int.tryParse(id.toString());');
+    buffer.writeln('} else {');
+    buffer.writeln('  id = UuidValue.fromString(id);');
+    buffer.writeln('}');
+
+    for (final entity in classes) {
+      buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}"){');
+      buffer.writeln('  return (await ${entity.name.pascalCase}.db.deleteWhere(session, where: (t) => t.id.equals(id))).first.toJson();');
+      buffer.writeln('}\n');
+    }
+    buffer.writeln("throw Exception('Could not find any resource called \$resource');");
+    buffer.writeln('}'); // deleteResource() end
+
+    buffer.writeln('dynamic newIdForResource(String resource) {'); // newIdForResource start
+    buffer.writeln('  final idType = modelsMap[resource]["schema"]["id"].toString();');
+    buffer.writeln('  if(idType.startsWith("UuidValue")){');
+    buffer.writeln('    return UuidV7().generate();');
+    buffer.writeln('  } else {');
+    buffer.writeln('    throw Exception("cannot create new id for \$resource");');
+    buffer.writeln('  }');
+    buffer.writeln('}'); // newIdForResource end
+
+    return buffer.toString();
+  }
+}
