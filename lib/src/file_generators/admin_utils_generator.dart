@@ -25,15 +25,7 @@ class AdminUtilsGenerator extends FileGenerator {
   String get path => '$serverPath/lib/src/web/utils/admin/admin_utils.dart';
 
   String? includeValueForResource(ServerpodClass modelClass, List<ServerpodClass> allClasses) {
-    final allClassNames = allClasses.map((e) => e.name).toList();
-    final relatedFields = modelClass.fields.where((field) {
-      final nonNullableFieldType = field.type.replaceAll('?', '');
-      if (nonNullableFieldType.startsWith('List<')) {
-        return allClassNames.map((e) => 'List<$e>').contains(nonNullableFieldType);
-      } else {
-        return allClassNames.contains(nonNullableFieldType);
-      }
-    }).toList();
+    final relatedFields = modelClass.fields.where((field) => field.relation != null && field.relation?.parent == null).toList();
 
     // if there is no relations then there is no ClassInclude value needed either
     if (relatedFields.isEmpty) {
@@ -61,9 +53,10 @@ class AdminUtilsGenerator extends FileGenerator {
   Future<String> fileContent() async {
     final buffer = StringBuffer();
 
-    buffer.writeln('// ignore_for_file: depend_on_referenced_packages'); // ignored lint rule
+    buffer.writeln('// ignore_for_file: depend_on_referenced_packages, unused_import, duplicate_import'); // ignored lint rule
     buffer.writeln("import 'package:$serverPackageName/src/generated/protocol.dart';"); // import
     buffer.writeln("import 'package:uuid/v7.dart';"); // import
+    buffer.writeln("import 'package:uuid/v4.dart';"); // import
     buffer.writeln("import 'package:serverpod/serverpod.dart';"); // import
     buffer.writeln("import 'package:serverpod/protocol.dart';"); // import
 
@@ -109,7 +102,7 @@ class AdminUtilsGenerator extends FileGenerator {
           "class": "${entity.name}",
           "columns": [${entity.fields.map((e) => e.name).toList().map((e) => '"$e"').join(',')}],
           "schema": $schema,
-          "related_fields": {${entity.fields.where((e) => e.relation != null).map((e) => '"${e.name}": "${e.type}"').join(',')}},
+          "related_fields": <String, dynamic>{${entity.fields.where((e) => e.relation != null).map((e) => '"${e.name}": "${e.type}"').join(',')}},
         },
       ''');
     }
@@ -174,11 +167,48 @@ class AdminUtilsGenerator extends FileGenerator {
       buffer.writeln('  }');
       buffer.writeln('  final row = ${entity.name.pascalCase}.fromJson(json);');
       buffer.writeln('  final isInDb = id != null && (await ${entity.name.pascalCase}.db.findById(session, id)) != null;');
+      buffer.writeln('  final ${entity.name} updatedRow;\n');
       buffer.writeln('  if(isInDb) {');
-      buffer.writeln('    return (await ${entity.name.pascalCase}.db.updateRow(session, row)).toJson();');
+      buffer.writeln('    updatedRow = (await ${entity.name.pascalCase}.db.updateRow(session, row));');
       buffer.writeln('  } else {');
-      buffer.writeln('    return (await ${entity.name.pascalCase}.db.insertRow(session, row)).toJson();');
+      buffer.writeln('    updatedRow = (await ${entity.name.pascalCase}.db.insertRow(session, row));');
       buffer.writeln('  }');
+      final relatedFields = entity.fields.where((field) => field.relation != null && field.relation?.parent == null).toList();
+
+      // if there is no relations then there is no ClassInclude value needed either
+      if (relatedFields.isNotEmpty) {
+        for (var relatedField in relatedFields) {
+          buffer.writeln('\n    // Updating relation field: ${relatedField.name} of type ${relatedField.type}');
+          buffer.writeln('if(row.${relatedField.name} != null) {');
+          final nonNullableType = relatedField.type.replaceAll('?', '');
+          if (relatedField.type.startsWith('List')) {
+            final extractedTypeName = nonNullableType.substring(5, nonNullableType.length - 1);
+            buffer.writeln('    // insert or update all objects inside the list');
+            buffer.writeln('final updated${relatedField.name.pascalCase} = (await Future.wait(');
+            buffer.writeln('  row.${relatedField.name}?.map((e) {');
+            buffer.writeln('final ${extractedTypeName.camelCase}Json = e.toJson();');
+            buffer.writeln('final id = ${extractedTypeName.camelCase}Json["id"];');
+            buffer.writeln(
+              'return insertOrUpdateResource(session, "${extractedTypeName.toLowerCase()}", ${extractedTypeName.camelCase}Json, id.toString());',
+            );
+            buffer.writeln('}) ?? <Future<Map<String, dynamic>>>[])).map((e) => $extractedTypeName.fromJson(e)).toList();');
+
+            buffer.writeln('    // attach relation between one(${entity.name}) to many(${relatedField.name}: ${relatedField.type})');
+            buffer.writeln(
+              'await ${entity.name}.db.attach.${relatedField.name}(session, updatedRow, updated${relatedField.name.pascalCase});',
+            );
+          } else {
+            buffer.writeln(
+              'final updated = await insertOrUpdateResource(session, "$nonNullableType", row.${relatedField.name}!.toJson(), row.${relatedField.name}!.id.toString());',
+            );
+
+            buffer.writeln('await ${entity.name}.db.attachRow.${relatedField.name}(session, updatedRow, $nonNullableType.fromJson(updated));');
+          }
+          buffer.writeln('}');
+        }
+      }
+
+      buffer.writeln('\nreturn (await findResourceById(session, "${entity.name.toLowerCase()}", updatedRow.id.toString()))!;');
       buffer.writeln('}\n');
     }
 
