@@ -26,7 +26,14 @@ class AdminUtilsGenerator extends FileGenerator {
 
   String? includeValueForResource(ServerpodClass modelClass, List<ServerpodClass> allClasses) {
     final allClassNames = allClasses.map((e) => e.name).toList();
-    final relatedFields = modelClass.fields.where((field) => allClassNames.contains(field.type.replaceAll('?', ''))).toList();
+    final relatedFields = modelClass.fields.where((field) {
+      final nonNullableFieldType = field.type.replaceAll('?', '');
+      if (nonNullableFieldType.startsWith('List<')) {
+        return allClassNames.map((e) => 'List<$e>').contains(nonNullableFieldType);
+      } else {
+        return allClassNames.contains(nonNullableFieldType);
+      }
+    }).toList();
 
     // if there is no relations then there is no ClassInclude value needed either
     if (relatedFields.isEmpty) {
@@ -36,7 +43,14 @@ class AdminUtilsGenerator extends FileGenerator {
     final buffer = StringBuffer();
     buffer.writeln('${modelClass.name.pascalCase}.include(');
     for (var relatedField in relatedFields) {
-      buffer.writeln('  ${relatedField.name}: ${relatedField.type.replaceAll('?', '').pascalCase}.include(),');
+      final nonNullableType = relatedField.type.replaceAll('?', '');
+      if (nonNullableType.startsWith('List<')) {
+        // extracting T out of List<T>
+        final extractedTypeName = nonNullableType.substring(5, nonNullableType.length - 1);
+        buffer.writeln('  ${relatedField.name}: ${extractedTypeName.pascalCase}.includeList(),');
+      } else {
+        buffer.writeln('  ${relatedField.name}: ${nonNullableType.pascalCase}.include(),');
+      }
     }
     buffer.writeln(')');
 
@@ -66,6 +80,27 @@ class AdminUtilsGenerator extends FileGenerator {
         entity.fields.insert(0, ParsedField(name: 'id', type: 'int?', meta: ['defaultPersist=serial'], relation: null));
       }
 
+      final schema =
+          '''
+            {${entity.fields.toList().map((parsedField) {
+            var typeMapping = ' "${parsedField.name}": "${parsedField.type}" ';
+
+            final nonNullableFieldType = parsedField.type.replaceAll('?', '');
+            if (classNames.contains(nonNullableFieldType) && parsedField.relation?.field == null) {
+              final foreignKeyFieldName = '${parsedField.name.camelCase}Id';
+
+              final relatedClassEntity = classes.firstWhereOrNull((e) => e.name == parsedField.type.replaceAll('?', ''));
+              final idTypeOfRelatedClass = relatedClassEntity?.fields.firstWhereOrNull((field) => field.name == 'id')?.type.replaceAll('?', '') ?? 'int';
+
+              final foreignKeyFieldType = parsedField.relation?.isOptional == true ? "$idTypeOfRelatedClass?" : idTypeOfRelatedClass;
+
+              return '$typeMapping, "$foreignKeyFieldName": "$foreignKeyFieldType"';
+            }
+
+            return typeMapping;
+          }).join(',')}}
+          ''';
+
       // in the schema section below there is a relation defined on the class type. it is required to add a the field for
       // foreign id to the schema as well.
       buffer.writeln('''
@@ -73,25 +108,10 @@ class AdminUtilsGenerator extends FileGenerator {
           "table": "${entity.table != null ? "${entity.table}" : "null"}", 
           "class": "${entity.name}",
           "columns": [${entity.fields.map((e) => e.name).toList().map((e) => '"$e"').join(',')}],
-          "schema": {${entity.fields.toList().map((parsedField) {
-        var typeMapping = ' "${parsedField.name}": "${parsedField.type}" ';
-
-        final nonNullableFieldType = parsedField.type.replaceAll('?', '');
-        if (classNames.contains(nonNullableFieldType) && parsedField.relation?.field == null) {
-          final foreignKeyFieldName = '${parsedField.name.camelCase}Id';
-
-          final relatedClassEntity = classes.firstWhereOrNull((e) => e.name == parsedField.type.replaceAll('?', ''));
-          final idTypeOfRelatedClass = relatedClassEntity?.fields.firstWhereOrNull((field) => field.name == 'id')?.type.replaceAll('?', '') ?? 'int';
-
-          final foreignKeyFieldType = parsedField.relation?.isOptional == true ? "$idTypeOfRelatedClass?" : idTypeOfRelatedClass;
-
-          return '$typeMapping, "$foreignKeyFieldName": "$foreignKeyFieldType"';
-        }
-
-        return typeMapping;
-      }).join(',')}},
+          "schema": $schema,
+          "related_fields": {${entity.fields.where((e) => e.relation != null).map((e) => '"${e.name}": "${e.type}"').join(',')}},
         },
-        ''');
+      ''');
     }
     buffer.writeln('};'); // map of models end
 
@@ -123,7 +143,10 @@ class AdminUtilsGenerator extends FileGenerator {
     buffer.writeln('Future<List<Map<String, dynamic>>> listResources(Session session, String resource) async {'); // listResources() start
     for (final entity in classes) {
       buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}"){');
-      buffer.writeln('  return (await ${entity.name.pascalCase}.db.find(session)).map((e)=> e.toJson()).toList();');
+      final includeParameterValue = includeValueForResource(entity, classes);
+      final includeParameter = includeParameterValue != null ? ', include: $includeParameterValue' : '';
+
+      buffer.writeln('  return (await ${entity.name.pascalCase}.db.find(session $includeParameter)).map((e)=> e.toJson()).toList();');
       buffer.writeln('}\n');
     }
     buffer.writeln("throw Exception('Could not find any resource called \$resource');");
@@ -133,6 +156,7 @@ class AdminUtilsGenerator extends FileGenerator {
       'Future<Map<String, dynamic>> insertOrUpdateResource(Session session, String resource, Map<String, dynamic> json, dynamic id,) async {',
     ); // insertOrUpdateResource() start
 
+    buffer.writeln('// parsing id to the correct id type, integer or uuid');
     buffer.writeln('final isIdInteger = int.tryParse(id?.toString() ?? "") != null;');
     buffer.writeln('if (isIdInteger) {');
     buffer.writeln('  id = int.tryParse(id.toString());');
@@ -143,7 +167,10 @@ class AdminUtilsGenerator extends FileGenerator {
     for (final entity in classes) {
       buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}"){');
       buffer.writeln('  if(json["id"] == null) {');
-      buffer.writeln('    json["id"] = newIdForResource(resource);');
+      buffer.writeln('    final newId = newUuidForResource(resource);');
+      buffer.writeln('    if(newId != null){');
+      buffer.writeln('      json["id"] = newId.toString();');
+      buffer.writeln('    }');
       buffer.writeln('  }');
       buffer.writeln('  final row = ${entity.name.pascalCase}.fromJson(json);');
       buffer.writeln('  final isInDb = id != null && (await ${entity.name.pascalCase}.db.findById(session, id)) != null;');
@@ -177,14 +204,16 @@ class AdminUtilsGenerator extends FileGenerator {
     buffer.writeln("throw Exception('Could not find any resource called \$resource');");
     buffer.writeln('}'); // deleteResource() end
 
-    buffer.writeln('dynamic newIdForResource(String resource) {'); // newIdForResource start
+    buffer.writeln('/// Will create a new UuidValue for resource if the id type is uuid. If type of id is int it will return null.');
+    buffer.writeln('dynamic newUuidForResource(String resource) {'); // newUuidForResource start
     buffer.writeln('  final idType = modelsMap[resource]["schema"]["id"].toString();');
     buffer.writeln('  if(idType.startsWith("UuidValue")){');
     buffer.writeln('    return UuidV7().generate();');
     buffer.writeln('  } else {');
-    buffer.writeln('    throw Exception("cannot create new id for \$resource");');
+    buffer.writeln('    // if id type is int it should fall on database to assign the integer id');
+    buffer.writeln('    return null;');
     buffer.writeln('  }');
-    buffer.writeln('}'); // newIdForResource end
+    buffer.writeln('}'); // newUuidForResource end
 
     return buffer.toString();
   }
