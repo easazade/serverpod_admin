@@ -12,13 +12,15 @@ import 'dart:isolate';
 /// - Each copied file's relative path (within [serverPath]) is printed.
 class Copier {
   final String serverPath;
+  final String serverPackageName;
 
-  Copier({required this.serverPath});
+  Copier({required this.serverPath, required this.serverPackageName});
 
   Future<void> copy() async {
-    final sourceDir = await _resolveCopyDirectory();
+    final sourceDir = await _resolveTemplatesDirectory();
+
     if (sourceDir == null) {
-      stdout.writeln('serverpod_admin: No copy directory found at lib/src/copy/. Nothing to do.');
+      stdout.writeln('serverpod_admin: No templates directory found at lib/src/templates/. Nothing to do.');
       return;
     }
 
@@ -37,14 +39,14 @@ class Copier {
 
       await Directory(_dirname(destinationPath)).create(recursive: true);
 
-      await _copyWithOptionalHeader(sourceFile: entity, destinationFile: File(destinationPath));
+      await _copyTemplateFile(sourceFile: entity, destinationFile: File(destinationPath));
 
       // Print the path relative to serverPath for readability
       stdout.writeln('Copied: $destRelativePath');
     }
   }
 
-  Future<Directory?> _resolveCopyDirectory() async {
+  Future<Directory?> _resolveTemplatesDirectory() async {
     // Resolve the URI to this file, then derive lib/src/copy from it.
     final selfUri = await Isolate.resolvePackageUri(Uri.parse('package:serverpod_admin/src/copier.dart'));
     if (selfUri == null) return null;
@@ -52,11 +54,11 @@ class Copier {
     // This file resolves to .../lib/src/copier.dart
     final selfFile = File.fromUri(selfUri);
     final libSrcDir = Directory(_dirname(selfFile.path)); // .../lib/src
-    final copyDir = Directory(_joinPaths(libSrcDir.path, 'copy'));
+    final copyDir = Directory(_joinPaths(libSrcDir.path, 'templates'));
     return copyDir;
   }
 
-  Future<void> _copyWithOptionalHeader({required File sourceFile, required File destinationFile}) async {
+  Future<void> _copyTemplateFile({required File sourceFile, required File destinationFile}) async {
     final String destFileName = _basename(destinationFile.path);
     final String ext = _safeExtension(destFileName).toLowerCase();
 
@@ -65,14 +67,11 @@ class Copier {
     final String header = _headerForExtension(ext);
 
     if (isText && header.isNotEmpty) {
-      try {
-        final String original = await sourceFile.readAsString();
-        final String content = '$header\n\n$original';
-        await destinationFile.writeAsString(content);
-        return;
-      } catch (_) {
-        // Fall back to raw bytes if text read fails.
-      }
+      final String original = await sourceFile.readAsString();
+      String content = '$header\n\n$original';
+      content = content.replaceAll("{{server_package_name}}", serverPackageName);
+      await destinationFile.writeAsString(content);
+      return;
     }
 
     // Default: copy bytes verbatim (no header)

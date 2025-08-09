@@ -1,0 +1,107 @@
+import 'dart:convert';
+
+import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
+import 'package:recase/recase.dart';
+import 'package:serverpod/serverpod.dart';
+
+class ViewObjectPage extends Widget {
+  String resource;
+  final String id;
+  final Map<String, dynamic> object;
+
+  ViewObjectPage({
+    required this.resource,
+    required this.id,
+    required this.object,
+  }) : super(name: 'view_object_page') {
+    resource = resource.toLowerCase();
+    
+    final List<Map<String, dynamic>> objectFields = object.entries.where((entry) {
+      final fieldName = entry.key;
+      final isPrivateField = fieldName.startsWith('_');
+      return !isPrivateField;
+    }).map((entry) {
+      final fieldName = entry.key;
+      final fieldValue = entry.value;
+      print(fieldName);
+      final fieldType = modelsMap[resource]['schema'][fieldName]!.toString();
+      final nonNullableFieldType = fieldType.replaceAll('?', '');
+      return <String, dynamic>{
+        "field_name": fieldName,
+        "field_value": fieldValue,
+        "field_type": nonNullableFieldType,
+      };
+    }).map((objectField) {
+      final json = <String, dynamic>{}..addAll(objectField);
+      print(json);
+      final relatedFieldsMap = (modelsMap[resource.toLowerCase()]['related_fields'] as Map<String, dynamic>);
+      final isListType = json['field_type'].toString().startsWith('List');
+      final isRelatedObject = relatedFieldsMap.containsKey(json['field_name']) && !isListType;
+
+      final isRelatedObjectList = relatedFieldsMap.containsKey(json['field_name']) && isListType;
+
+      json.addAll({
+        'has_value': json['field_value'] != null,
+        'bool': json['field_type'] == 'bool',
+        'int': json['field_type'] == 'int',
+        'double': json['field_type'] == 'double',
+        'String': json['field_type'] == 'String',
+        'Duration': json['field_type'] == 'Duration',
+        'DateTime': json['field_type'] == 'DateTime',
+        'ByteData': json['field_type'] == 'ByteData',
+        'UuidValue': json['field_type'] == 'UuidValue',
+        'Uri': json['field_type'] == 'Uri',
+        'BigInt': json['field_type'] == 'BigInt',
+        'Vector': json['field_type'] == 'Vector',
+        'is_list': json['field_type'].toString().startsWith('List<') && !isRelatedObjectList,
+        'is_set': json['field_type'].toString().startsWith('Set<'),
+        'is_map': json['field_type'].toString().startsWith('Map<'),
+
+        // one to one relation
+        'is_related_object': isRelatedObject,
+        if (isRelatedObject)
+          'view_related_object_url': '/admin/view/${json['field_type']}/${json['field_value']['id'].toString()}',
+
+        // one to many relation
+        'is_related_object_list': isRelatedObjectList,
+        if (isRelatedObjectList)
+          'related_object_list': (json['field_value'] as List).map((e) {
+            final nonNullableType = json['field_type'].toString().replaceAll('?', '');
+            final modelType = nonNullableType.substring(5, nonNullableType.length - 1);
+            final viewRelatedObjectUrl = '/admin/view/$modelType/${e['id'].toString()}';
+            print(viewRelatedObjectUrl);
+            return {
+              'related_object': e,
+              'view_related_object_url': viewRelatedObjectUrl,
+            };
+          })
+      });
+
+      return json;
+    }).toList();
+
+    values = {
+      "id": id,
+      "table_url": "/admin/list/$resource",
+      "edit_url": "/admin/edit/$resource/$id",
+      "delete_url": "/admin/delete/$resource/$id",
+      "class": resource.pascalCase,
+      "object_fields": objectFields,
+      // ... other template variables like URLs, etc.
+    };
+  }
+}
+
+/// Returns a pretty-printed JSON string from [input].
+///
+/// Throws a [FormatException] if [input] is not valid JSON.
+String prettyPrintJson(String input) {
+  // Decode the input string into a Dart object (Map/List)
+  final dynamic decoded = jsonDecode(input);
+
+  // Create an encoder that indents with 2 spaces
+  const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+
+  // Convert the object back to a pretty JSON string
+  return encoder.convert(decoded);
+}

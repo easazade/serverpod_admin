@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{class}} - Edit - Serverpod Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <style>
+        /* Object edit specific styles */
+        .object-container {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .object-header {
+            background: #f8f9fa;
+            padding: 16px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .object-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+
+        .object-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .object-content {
+            padding: 20px;
+        }
+
+        .field-group {
+            margin-bottom: 20px;
+        }
+
+        .field-label {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .field-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        .field-input:focus {
+            outline: 0;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .field-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .field-select {
+            background-color: white;
+        }
+
+        .field-checkbox {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .field-type {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+
+        .field-error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .form-actions {
+            background: #f8f9fa;
+            padding: 16px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-actions-left {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-actions-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-section h3 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #333;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 8px;
+        }
+
+        .sidebar-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar-btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .object-id {
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .required-field {
+            color: #dc3545;
+        }
+
+        .field-help {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .checkbox-group .field-label {
+            margin-bottom: 0;
+            margin-left: 8px;
+        }
+
+        .date-input {
+            font-family: inherit;
+        }
+
+        .number-input {
+            font-family: monospace;
+        }
+
+        .json-input {
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .duration-input {
+            font-family: monospace;
+        }
+
+        .datetime-input {
+            font-family: inherit;
+        }
+
+        .bytedata-input {
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .uuid-input {
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .uri-input {
+            font-family: inherit;
+        }
+
+        .bigint-input {
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .vector-input {
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .collection-input {
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        /* Collection field styles */
+        .collection-container {
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 12px;
+            background: #f8f9fa;
+        }
+
+        .collection-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .collection-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .collection-input-field {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .collection-input-field:focus {
+            outline: 0;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .collection-remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .collection-remove-btn:hover {
+            background: #c82333;
+        }
+
+        .collection-add-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .collection-add-btn:hover {
+            background: #1e7e34;
+        }
+
+        .map-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .map-key-field {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .map-value-field {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .map-key-field:focus,
+        .map-value-field:focus {
+            outline: 0;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .collection-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <img src="/images/serverpod-admin-logo.png" width="200" style="margin-top: 8px; margin-bottom: 12px;">
+            <div class="header-links">
+                <a href="/" class="header-link">VIEW SITE</a>
+                <a href="/admin/password_change/" class="header-link">CHANGE PASSWORD</a>
+                <a href="/admin/logout/" class="header-link">LOG OUT</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-area">
+            <!-- Breadcrumb -->
+            <div style="margin-bottom: 20px;">
+                <a href="/admin/" style="color: #007bff; text-decoration: none;">← Back to Admin</a>
+                <span style="color: #6c757d; margin: 0 8px;">/</span>
+                <a href="{{table_url}}" style="color: #007bff; text-decoration: none;">{{class}}</a>
+                <span style="color: #6c757d; margin: 0 8px;">/</span>
+                <span style="color: #6c757d; margin: 0 8px;">/</span>
+                <span style="color: #6c757d;">Edit</span>
+            </div>
+
+            <!-- Object Container -->
+            <div class="object-container">
+                <!-- Object Header -->
+                <div class="object-header">
+                        <h1 class="object-title">Create new {{class}}</h1>
+                </div>
+
+                <!-- Object Content -->
+                <form id="editForm" method="POST" action="{{save_url}}">
+                    <div class="object-content">
+                        {{#object_fields}}
+                        <div class="field-group">
+                            <label class="field-label" for="field_{{field_name}}">
+                                {{field_name}}
+                                {{#required}}<span class="required-field">*</span>{{/required}}
+                            </label>
+                            
+                            {{#field_type}}
+                                {{#bool}}
+                                    <div class="checkbox-group">
+                                        <input type="checkbox"
+                                               id="field_{{field_name}}" 
+                                               name="{{field_name}}" 
+                                               class="field-input field-checkbox"
+                                        <label for="field_{{field_name}}" class="field-label">{{field_name}}</label>
+                                    </div>
+                                {{/bool}}
+                                
+                                {{#int}}
+                                    <input type="number" 
+                                           id="field_{{field_name}}" 
+                                           name="{{field_name}}" 
+                                           class="field-input number-input"
+                                           step="1"
+                                           {{#required}}required{{/required}}
+                                           placeholder="Enter {{field_name}} (integer)...">
+                                {{/int}}
+                                
+                                {{#double}}
+                                    <input type="number" 
+                                           id="field_{{field_name}}" 
+                                           name="{{field_name}}" 
+                                           class="field-input number-input"
+                                           step="0.01"
+                                           {{#required}}required{{/required}}
+                                           placeholder="Enter {{field_name}} (decimal)...">
+                                {{/double}}
+                                
+                                {{#String}}
+                                    <input type="text" 
+                                           id="field_{{field_name}}" 
+                                           name="{{field_name}}" 
+                                           class="field-input"
+                                           {{#required}}required{{/required}}
+                                           placeholder="Enter {{field_name}}...">
+                                {{/String}}
+                                
+                                {{#Duration}}
+                                    <input type="text" 
+                                           id="field_{{field_name}}" 
+                                           name="{{field_name}}" 
+                                           class="field-input duration-input"
+                                           {{#required}}required{{/required}}
+                                           placeholder="Enter duration (e.g., 2h 30m, 1d 5h)...">
+                                {{/Duration}}
+                                
+                                {{#DateTime}}
+                                    <input type="datetime-local" 
+                                           id="field_{{field_name}}" 
+                                           name="{{field_name}}" 
+                                           class="field-input datetime-input"
+                                           {{#required}}required{{/required}}>
+                                {{/DateTime}}
+                                
+                                {{#ByteData}}
+                                    <textarea id="field_{{field_name}}" 
+                                              name="{{field_name}}" 
+                                              class="field-input bytedata-input"
+                                              rows="4"
+                                              {{#required}}required{{/required}}
+                                              placeholder="Enter byte data (base64 encoded)..."></textarea>
+                                {{/ByteData}}
+                                
+                                {{#Uri}}
+                                    <input type="url" 
+                                           id="field_{{field_name}}" 
+                                           name="{{field_name}}" 
+                                           class="field-input uri-input"
+                                           {{#required}}required{{/required}}
+                                           placeholder="Enter URL (e.g., https://example.com)...">
+                                {{/Uri}}
+                                
+                                {{#BigInt}}
+                                    <input type="text" 
+                                           id="field_{{field_name}}" 
+                                           name="{{field_name}}" 
+                                           class="field-input bigint-input"
+                                           pattern="^-?\d+$"
+                                           {{#required}}required{{/required}}
+                                           placeholder="Enter big integer...">
+                                {{/BigInt}}
+
+                                {{#is_list}}
+                                <div class="collection-container" id="collection_{{field_name}}">
+                                    <div class="collection-label">List Items ({{field_type}}):</div>
+                                    <div class="collection-items" id="list_items_{{field_name}}">
+                                        <div class="collection-item">
+                                            {{#is_list_string}}
+                                            <input type="text" 
+                                                   class="collection-input-field list-field-input" 
+                                                   name="{{field_name}}" 
+                                                   placeholder="Enter text..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_list_string}}
+                                            {{#is_list_int}}
+                                            <input type="number" 
+                                                   class="collection-input-field list-field-input number-input" 
+                                                   name="{{field_name}}" 
+                                                   step="1"
+                                                   placeholder="Enter integer..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_list_int}}
+                                            {{#is_list_double}}
+                                            <input type="number" 
+                                                   class="collection-input-field list-field-input number-input" 
+                                                   name="{{field_name}}" 
+                                                   step="0.01"
+                                                   placeholder="Enter decimal..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_list_double}}
+                                            {{#is_list_num}}
+                                            <input type="number" 
+                                                   class="collection-input-field list-field-input number-input" 
+                                                   name="{{field_name}}" 
+                                                   step="any"
+                                                   placeholder="Enter number..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_list_num}}
+                                            {{#is_list_bool}}
+                                            <select class="collection-input-field list-field-input" 
+                                                    name="{{field_name}}" 
+                                                    {{#required}}required{{/required}}>
+                                                <option value="">Select boolean value...</option>
+                                                <option value="true">true</option>
+                                                <option value="false">false</option>
+                                            </select>
+                                            {{/is_list_bool}}
+                                            <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="collection-add-btn" onclick="addListItem('{{field_name}}', '{{field_type}}')">Add Item</button>
+                                </div>
+                                {{/is_list}}
+
+                                {{#is_set}}
+                                <div class="collection-container" id="collection_{{field_name}}">
+                                    <div class="collection-label">Set Items ({{field_type}}):</div>
+                                    <div class="collection-items" id="set_items_{{field_name}}">
+                                        <div class="collection-item">
+                                            {{#is_set_string}}
+                                            <input type="text" 
+                                                   class="collection-input-field set-field-input" 
+                                                   name="{{field_name}}" 
+                                                   placeholder="Enter text..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_set_string}}
+                                            {{#is_set_int}}
+                                            <input type="number" 
+                                                   class="collection-input-field set-field-input number-input" 
+                                                   name="{{field_name}}" 
+                                                   step="1"
+                                                   placeholder="Enter integer..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_set_int}}
+                                            {{#is_set_double}}
+                                            <input type="number" 
+                                                   class="collection-input-field set-field-input number-input" 
+                                                   name="{{field_name}}" 
+                                                   step="0.01"
+                                                   placeholder="Enter decimal..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_set_double}}
+                                            {{#is_set_num}}
+                                            <input type="number" 
+                                                   class="collection-input-field set-field-input number-input" 
+                                                   name="{{field_name}}" 
+                                                   step="any"
+                                                   placeholder="Enter number..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_set_num}}
+                                            {{#is_set_bool}}
+                                            <select class="collection-input-field set-field-input" 
+                                                    name="{{field_name}}" 
+                                                    {{#required}}required{{/required}}>
+                                                <option value="">Select boolean value...</option>
+                                                <option value="true">true</option>
+                                                <option value="false">false</option>
+                                            </select>
+                                            {{/is_set_bool}}
+                                            <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="collection-add-btn" onclick="addSetItem('{{field_name}}', '{{field_type}}')">Add Item</button>
+                                </div>
+                                {{/is_set}}
+                                
+                                {{#is_map}}
+                                <div class="collection-container" id="collection_{{field_name}}">
+                                    <div class="collection-label">Map Items ({{field_type}}):</div>
+                                    <div class="collection-items" id="map_items_{{field_name}}">
+                                        <div class="map-item">
+                                            <input type="text" 
+                                                   class="map-key-field map-field-input" 
+                                                   name="{{field_name}}_key" 
+                                                   placeholder="Enter key..."
+                                                   {{#required}}required{{/required}}>
+                                            {{#is_map_string_string}}
+                                            <input type="text" 
+                                                   class="map-value-field map-field-input" 
+                                                   name="{{field_name}}_value" 
+                                                   placeholder="Enter text value..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_map_string_string}}
+                                            {{#is_map_string_int}}
+                                            <input type="number" 
+                                                   class="map-value-field map-field-input number-input" 
+                                                   name="{{field_name}}_value" 
+                                                   step="1"
+                                                   placeholder="Enter integer value..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_map_string_int}}
+                                            {{#is_map_string_double}}
+                                            <input type="number" 
+                                                   class="map-value-field map-field-input number-input" 
+                                                   name="{{field_name}}_value" 
+                                                   step="0.01"
+                                                   placeholder="Enter decimal value..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_map_string_double}}
+                                            {{#is_map_string_num}}
+                                            <input type="number" 
+                                                   class="map-value-field map-field-input number-input" 
+                                                   name="{{field_name}}_value" 
+                                                   step="any"
+                                                   placeholder="Enter number value..."
+                                                   {{#required}}required{{/required}}>
+                                            {{/is_map_string_num}}
+                                            {{#is_map_string_bool}}
+                                            <select class="map-value-field map-field-input" 
+                                                    name="{{field_name}}_value" 
+                                                    {{#required}}required{{/required}}>
+                                                <option value="">Select boolean value...</option>
+                                                <option value="true">true</option>
+                                                <option value="false">false</option>
+                                            </select>
+                                            {{/is_map_string_bool}}
+                                            <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="collection-add-btn" onclick="addMapItem('{{field_name}}', '{{field_type}}')">Add Key-Value Pair</button>
+                                </div>
+                                {{/is_map}}
+                                
+                                {{#Vector}}
+                                    <textarea id="field_{{field_name}}" 
+                                              name="{{field_name}}" 
+                                              class="field-input vector-input"
+                                              rows="6"
+                                              {{#required}}required{{/required}}
+                                              placeholder="Enter vector data (one value per line or comma-separated)..."></textarea>
+                                {{/Vector}}
+
+                                
+                            {{/field_type}}
+                            
+                            <div class="field-type">{{field_type}}</div>
+                            {{#error}}
+                                <div class="field-error">{{error}}</div>
+                            {{/error}}
+                        </div>
+                        {{/object_fields}}
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <div class="form-actions-left">
+                            <a href="{{table_url}}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                        <div class="form-actions-right">
+                            <button type="submit" class="btn btn-success">Save Changes</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+
+            <div class="sidebar-section">
+                <h3>Actions</h3>
+                <div class="sidebar-actions">
+                    <a class="sidebar-btn btn btn-secondary" href="{{table_url}}">Cancel</a>
+                    <button class="sidebar-btn btn btn-success" form="editForm" type="submit">Save {{class}}</button>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Form Help</h3>
+                <p style="font-size: 12px; color: #6c757d; line-height: 1.4;">
+                    Fields marked with <span class="required-field">*</span> are required.
+                    Make sure to save your changes before leaving this page.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1) Select your form
+            const form = document.getElementById('editForm'); 
+            if (!form) return;  // nothing to do if it doesn't exist
+            
+            // 2) Listen for submit
+            form.addEventListener('submit', async event => {
+              console.log('trying to save object');
+              event.preventDefault();  // stop the real submission
+
+              const data = {};
+              
+              // Handle List inputs with type conversion
+              const listInputs = document.querySelectorAll('.list-field-input');
+              listInputs.forEach(input => {
+                if(data[input.name] == null){
+                    data[input.name] = []
+                }
+                if (input.value.trim()) {
+                    const convertedValue = convertValueByType(input.value, input);
+                    data[input.name].push(convertedValue)
+                }
+              })
+
+              // Handle Set inputs with type conversion
+              const setInputs = document.querySelectorAll('.set-field-input');
+              setInputs.forEach(input => {
+                if(data[input.name] == null){
+                    data[input.name] = []
+                }
+                if (input.value.trim()) {
+                    const convertedValue = convertValueByType(input.value, input);
+                    data[input.name].push(convertedValue)
+                }
+              })
+
+              // Handle Map inputs with type conversion
+              const mapKeyInputs = document.querySelectorAll('.map-field-input[name$="_key"]');
+              const mapValueInputs = document.querySelectorAll('.map-field-input[name$="_value"]');
+              
+              mapKeyInputs.forEach((keyInput, index) => {
+                const valueInput = mapValueInputs[index];
+                if (keyInput && valueInput) {
+                  const fieldName = keyInput.name.replace('_key', '');
+                  if(data[fieldName] == null){
+                      data[fieldName] = {}
+                  }
+                  if (keyInput.value.trim() && valueInput.value.trim()) {
+                      const convertedValue = convertValueByType(valueInput.value, valueInput);
+                      data[fieldName][keyInput.value] = convertedValue;
+                  }
+                }
+              })
+        
+              // 3) Gather all inputs with class 'field-input'
+              const inputs = document.querySelectorAll('.field-input');
+        
+              // 4) Build up the object
+              inputs.forEach(input => {
+                // skip any without a name
+                if (!input.name) return;
+                // skip if already has a value assigned like List, Set, Map types which are handled above
+                if(data[input.name] != null) {
+                    return;
+                } else if(input.type == 'checkbox'){
+                    data[input.name] = input.checked
+                } else {
+                    data[input.name] = input.value;
+                }
+              });
+        
+              // 5) Turn into JSON
+              const json = JSON.stringify(data);
+              console.log(json);
+
+                        
+              try {
+                // 1) fire off a POST with your JSON
+                const resp = await fetch(form.action, {
+                  method: form.method || 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: json,
+                  // note: by default fetch will follow 3xx redirects, but it won't
+                  // change the window location for you.
+                  redirect: 'follow'
+                });
+            
+                if (!resp.ok) {
+                  throw new Error(`Server returned ${resp.status}: ${resp.statusText}`);
+                }
+            
+                // 2) pull back the HTML as text
+                const html = await resp.text();
+            
+                // 3) overwrite the current page with the returned HTML
+                document.open();
+                document.write(html);
+                document.close();
+              }
+              catch (err) {
+                console.error('Submission failed:', err);
+                // optionally show a user‐facing error message here
+              }
+            });
+        });
+
+
+        // formatting and setting date time on the datetimepicker fields
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("loaded");
+            // helper for zero-padding
+            function pad(n, width = 2) {
+                const s = String(n);
+                return s.length >= width ? s : '0'.repeat(width - s.length) + s;
+            }
+            
+            document.querySelectorAll('input.datetime-input').forEach(function(input) {
+              const utc = input.getAttribute('value');
+              if (!utc) return;
+        
+              // 1. parse UTC ISO into a Date (in the browser's local timezone)
+              const d = new Date(utc);
+        
+              // 2. build "YYYY-MM-DDThh:mm" (you can append :ss or .SSS if you like)
+              const localValue =
+                `${d.getFullYear()}-` +
+                `${pad(d.getMonth()+1)}-` +
+                `${pad(d.getDate())}T` +
+                `${pad(d.getHours())}:` +
+                `${pad(d.getMinutes())}`; 
+
+              console.log(localValue);
+              // 3. re-assign the corrected local string
+              input.value = localValue;
+            });
+          });
+
+
+        // Form validation
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            const requiredFields = document.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.style.borderColor = '#dc3545';
+                    field.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+                } else {
+                    field.style.borderColor = '#ced4da';
+                    field.style.boxShadow = 'none';
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+
+        // UUID validation
+        document.querySelectorAll('.uuid-input').forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    const uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+                    if (uuidPattern.test(this.value)) {
+                        this.style.borderColor = '#28a745';
+                        this.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+                    } else {
+                        this.style.borderColor = '#dc3545';
+                        this.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+                    }
+                }
+            });
+        });
+
+        // BigInt validation
+        document.querySelectorAll('.bigint-input').forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    const bigIntPattern = /^-?\d+$/;
+                    if (bigIntPattern.test(this.value)) {
+                        this.style.borderColor = '#28a745';
+                        this.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+                    } else {
+                        this.style.borderColor = '#dc3545';
+                        this.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+                    }
+                }
+            });
+        });
+
+        // Duration validation (basic format check)
+        document.querySelectorAll('.duration-input').forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    // Basic duration format validation (e.g., "2h 30m", "1d 5h", "30m")
+                    const durationPattern = /^(\d+d\s*)?(\d+h\s*)?(\d+m\s*)?(\d+s\s*)?$/;
+                    if (durationPattern.test(this.value.trim())) {
+                        this.style.borderColor = '#28a745';
+                        this.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+                    } else {
+                        this.style.borderColor = '#dc3545';
+                        this.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+                    }
+                }
+            });
+        });
+
+        // ByteData validation (base64 check)
+        document.querySelectorAll('.bytedata-input').forEach(textarea => {
+            textarea.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    try {
+                        // Check if it's valid base64
+                        atob(this.value.trim());
+                        this.style.borderColor = '#28a745';
+                        this.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+                    } catch (e) {
+                        this.style.borderColor = '#dc3545';
+                        this.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+                    }
+                }
+            });
+        });
+
+        // Vector validation (basic numeric check)
+        document.querySelectorAll('.vector-input').forEach(textarea => {
+            textarea.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    const lines = this.value.trim().split(/[\n,]/);
+                    let isValid = true;
+                    
+                    for (let line of lines) {
+                        line = line.trim();
+                        if (line && isNaN(parseFloat(line))) {
+                            isValid = false;
+                            break;
+                        }
+                    }
+                    
+                    if (isValid) {
+                        this.style.borderColor = '#28a745';
+                        this.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+                    } else {
+                        this.style.borderColor = '#dc3545';
+                        this.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+                    }
+                }
+            });
+        });
+
+
+
+        // Auto-save functionality (optional)
+        let autoSaveTimer;
+        document.querySelectorAll('.field-input').forEach(input => {
+            input.addEventListener('input', function() {
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(() => {
+                    // Auto-save logic could be implemented here
+                    console.log('Auto-save triggered');
+                }, 2000);
+            });
+        });
+
+        // Value conversion function
+        function convertValueByType(value, input) {
+            // Check input type and convert accordingly
+            if (input.type === 'number') {
+                return input.step === '1' ? parseInt(value) : parseFloat(value);
+            } else if (input.tagName === 'SELECT') {
+                return value === 'true' ? true : value === 'false' ? false : value;
+            } else {
+                return value;
+            }
+        }
+
+        // Collection management functions
+        function addListItem(fieldName, fieldType) {
+            const container = document.getElementById(`list_items_${fieldName}`);
+            const newItem = document.createElement('div');
+            newItem.className = 'collection-item';
+            
+            let inputHtml = '';
+            const isRequired = document.querySelector(`[name="${fieldName}"]`).hasAttribute('required');
+            
+            if (fieldType === 'List<String>') {
+                inputHtml = `<input type="text" 
+                                   class="collection-input-field list-field-input" 
+                                   name="${fieldName}" 
+                                   placeholder="Enter text..."
+                                   ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'List<int>') {
+                inputHtml = `<input type="number" 
+                                   class="collection-input-field list-field-input number-input" 
+                                   name="${fieldName}" 
+                                   step="1"
+                                   placeholder="Enter integer..."
+                                   ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'List<double>') {
+                inputHtml = `<input type="number" 
+                                   class="collection-input-field list-field-input number-input" 
+                                   name="${fieldName}" 
+                                   step="0.01"
+                                   placeholder="Enter decimal..."
+                                   ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'List<num>') {
+                inputHtml = `<input type="number" 
+                                   class="collection-input-field list-field-input number-input" 
+                                   name="${fieldName}" 
+                                   step="any"
+                                   placeholder="Enter number..."
+                                   ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'List<bool>') {
+                inputHtml = `<select class="collection-input-field list-field-input" 
+                                     name="${fieldName}" 
+                                     ${isRequired ? 'required' : ''}>
+                                <option value="">Select boolean value...</option>
+                                <option value="true">true</option>
+                                <option value="false">false</option>
+                            </select>`;
+            } else {
+                // Default to text input
+                inputHtml = `<input type="text" 
+                                   class="collection-input-field list-field-input" 
+                                   name="${fieldName}" 
+                                   placeholder="Enter list item..."
+                                   ${isRequired ? 'required' : ''}>`;
+            }
+            
+            newItem.innerHTML = `
+                ${inputHtml}
+                <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
+            `;
+            container.appendChild(newItem);
+        }
+
+        function addSetItem(fieldName, fieldType) {
+            const container = document.getElementById(`set_items_${fieldName}`);
+            const newItem = document.createElement('div');
+            newItem.className = 'collection-item';
+            
+            let inputHtml = '';
+            const isRequired = document.querySelector(`[name="${fieldName}"]`).hasAttribute('required');
+            
+            if (fieldType === 'Set<String>') {
+                inputHtml = `<input type="text" 
+                                   class="collection-input-field set-field-input" 
+                                   name="${fieldName}" 
+                                   placeholder="Enter text..."
+                                   ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'Set<int>') {
+                inputHtml = `<input type="number" 
+                                   class="collection-input-field set-field-input number-input" 
+                                   name="${fieldName}" 
+                                   step="1"
+                                   placeholder="Enter integer..."
+                                   ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'Set<double>') {
+                inputHtml = `<input type="number" 
+                                   class="collection-input-field set-field-input number-input" 
+                                   name="${fieldName}" 
+                                   step="0.01"
+                                   placeholder="Enter decimal..."
+                                   ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'Set<num>') {
+                inputHtml = `<input type="number" 
+                                   class="collection-input-field set-field-input number-input" 
+                                   name="${fieldName}" 
+                                   step="any"
+                                   placeholder="Enter number..."
+                                   ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'Set<bool>') {
+                inputHtml = `<select class="collection-input-field set-field-input" 
+                                     name="${fieldName}" 
+                                     ${isRequired ? 'required' : ''}>
+                                <option value="">Select boolean value...</option>
+                                <option value="true">true</option>
+                                <option value="false">false</option>
+                            </select>`;
+            } else {
+                // Default to text input
+                inputHtml = `<input type="text" 
+                                   class="collection-input-field set-field-input" 
+                                   name="${fieldName}" 
+                                   placeholder="Enter set item..."
+                                   ${isRequired ? 'required' : ''}>`;
+            }
+            
+            newItem.innerHTML = `
+                ${inputHtml}
+                <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
+            `;
+            container.appendChild(newItem);
+        }
+
+        function addMapItem(fieldName, fieldType) {
+            console.log(fieldType);
+            const container = document.getElementById(`map_items_${fieldName}`);
+            const newItem = document.createElement('div');
+            newItem.className = 'map-item';
+            
+            let valueInputHtml = '';
+            const isRequired = document.querySelector(`[name="${fieldName}_value"]`).hasAttribute('required');
+            
+            if (fieldType === 'Map<String, String>') {
+                valueInputHtml = `<input type="text" 
+                                         class="map-value-field map-field-input" 
+                                         name="${fieldName}_value" 
+                                         placeholder="Enter text value..."
+                                         ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'Map<String, int>') {
+                valueInputHtml = `<input type="number" 
+                                         class="map-value-field map-field-input number-input" 
+                                         name="${fieldName}_value" 
+                                         step="1"
+                                         placeholder="Enter integer value..."
+                                         ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'Map<String, double>') {
+                valueInputHtml = `<input type="number" 
+                                         class="map-value-field map-field-input number-input" 
+                                         name="${fieldName}_value" 
+                                         step="0.01"
+                                         placeholder="Enter decimal value..."
+                                         ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'Map<String, num>') {
+                valueInputHtml = `<input type="number" 
+                                         class="map-value-field map-field-input number-input" 
+                                         name="${fieldName}_value" 
+                                         step="any"
+                                         placeholder="Enter number value..."
+                                         ${isRequired ? 'required' : ''}>`;
+            } else if (fieldType === 'Map<String, bool>') {
+                valueInputHtml = `<select class="map-value-field map-field-input" 
+                                           name="${fieldName}_value" 
+                                           ${isRequired ? 'required' : ''}>
+                                      <option value="">Select boolean value...</option>
+                                      <option value="true">true</option>
+                                      <option value="false">false</option>
+                                  </select>`;
+            } else {
+                // Default to text input
+                valueInputHtml = `<input type="text" 
+                                         class="map-value-field map-field-input" 
+                                         name="${fieldName}_value" 
+                                         placeholder="Enter value..."
+                                         ${isRequired ? 'required' : ''}>`;
+            }
+            
+            newItem.innerHTML = `
+                <input type="text" 
+                       class="map-key-field map-field-input" 
+                       name="${fieldName}_key" 
+                       placeholder="Enter key..."
+                       ${document.querySelector(`[name="${fieldName}_key"]`).hasAttribute('required') ? 'required' : ''}>
+                ${valueInputHtml}
+                <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
+            `;
+            container.appendChild(newItem);
+        }
+
+        function removeCollectionItem(button) {
+            const container = button.closest('.collection-items');
+            const items = container.querySelectorAll('.collection-item, .map-item');
+            
+            // Don't remove the last item if it's required
+            if (items.length > 1) {
+                button.closest('.collection-item, .map-item').remove();
+            } else {
+                // Clear the input instead of removing
+                const inputs = button.closest('.collection-item, .map-item').querySelectorAll('input');
+                inputs.forEach(input => input.value = '');
+            }
+        }
+
+        // Add validation for collection inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            // Validate number inputs in collections
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('number-input') && e.target.classList.contains('collection-input-field')) {
+                    const value = e.target.value;
+                    if (value && !isNaN(parseFloat(value))) {
+                        e.target.style.borderColor = '#28a745';
+                        e.target.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+                    } else if (value) {
+                        e.target.style.borderColor = '#dc3545';
+                        e.target.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+                    } else {
+                        e.target.style.borderColor = '#ced4da';
+                        e.target.style.boxShadow = 'none';
+                    }
+                }
+            });
+
+            // Validate integer inputs specifically
+            document.addEventListener('blur', function(e) {
+                if (e.target.classList.contains('number-input') && e.target.classList.contains('collection-input-field')) {
+                    const value = e.target.value;
+                    if (value && e.target.step === '1') {
+                        // Integer validation
+                        if (Number.isInteger(parseFloat(value))) {
+                            e.target.style.borderColor = '#28a745';
+                            e.target.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+                        } else {
+                            e.target.style.borderColor = '#dc3545';
+                            e.target.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
+import 'package:recase/recase.dart';
+import 'package:serverpod/serverpod.dart';
+
+class AddObjectPage extends Widget {
+  String resource;
+
+  AddObjectPage({required this.resource}) : super(name: 'add_object_page') {
+    resource = resource.toLowerCase();
+    // Generate object fields similar to ViewObjectPage
+    print('resource: $resource');
+    final Map<String, dynamic> schema = modelsMap[resource]['schema'];
+
+    final List<Map<String, dynamic>> objectFields = schema.entries.map((entry) {
+      final fieldName = entry.key;
+      final fieldType = entry.value.toString();
+      print(fieldType);
+      final nonNullableFieldType = fieldType.replaceAll('?', '');
+      print(nonNullableFieldType);
+      final isRequired = !fieldType.endsWith('?');
+
+      return <String, dynamic>{
+        "field_name": fieldName,
+        "field_type": nonNullableFieldType,
+        "required": isRequired,
+      };
+    }).map((objectField) {
+      final json = <String, dynamic>{}..addAll(objectField);
+
+      json.addAll({
+        'error': null,
+        'bool': json['field_type'] == 'bool',
+        'int': json['field_type'] == 'int',
+        'double': json['field_type'] == 'double',
+        'String': json['field_type'] == 'String',
+        'Duration': json['field_type'] == 'Duration',
+        'DateTime': json['field_type'] == 'DateTime',
+        'ByteData': json['field_type'] == 'ByteData',
+        'UuidValue': json['field_type'] == 'UuidValue',
+        'Uri': json['field_type'] == 'Uri',
+        'BigInt': json['field_type'] == 'BigInt',
+        'Vector': json['field_type'] == 'Vector',
+
+        'is_list': json['field_type'].toString().startsWith('List'),
+        'is_map': json['field_type'].toString().startsWith('Map'),
+        'is_set': json['field_type'].toString().startsWith('Set'),
+
+        // list
+        'is_list_string': json['field_type'].toString().startsWith('List<String>'),
+        'is_list_int': json['field_type'].toString().startsWith('List<int>'),
+        'is_list_double': json['field_type'].toString().startsWith('List<double>'),
+        'is_list_num': json['field_type'].toString().startsWith('List<num>'),
+        'is_list_bool': json['field_type'].toString().startsWith('List<bool>'),
+
+        // set
+        'is_set_string': json['field_type'].toString().startsWith('Set<String>'),
+        'is_set_int': json['field_type'].toString().startsWith('Set<int>'),
+        'is_set_double': json['field_type'].toString().startsWith('Set<double>'),
+        'is_set_num': json['field_type'].toString().startsWith('Set<num>'),
+        'is_set_bool': json['field_type'].toString().startsWith('Set<bool>'),
+
+        // map
+        'is_map_string_string': json['field_type'].toString().startsWith('Map<String, String>'),
+        'is_map_string_int': json['field_type'].toString().startsWith('Map<String, int>'),
+        'is_map_string_double': json['field_type'].toString().startsWith('Map<String, double>'),
+        'is_map_string_num': json['field_type'].toString().startsWith('Map<String, num>'),
+        'is_map_string_bool': json['field_type'].toString().startsWith('Map<String, bool>'),
+      });
+
+      return json;
+    }).toList();
+
+    values = {
+      "table_url": "/admin/list/$resource",
+      "save_url": "/admin/save/$resource",
+      "class": resource.pascalCase,
+      "resource": resource,
+      "object_fields": objectFields,
+    };
+  }
+}

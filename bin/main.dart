@@ -40,6 +40,6 @@ void main(List<String> args) async {
     await file.createFile();
   }
 
-  final copier = Copier(serverPath: serverDir.path);
+  final copier = Copier(serverPath: serverDir.path, serverPackageName: serverPackageName);
   await copier.copy();
 }

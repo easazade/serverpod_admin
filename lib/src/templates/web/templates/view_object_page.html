@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{class}} - View - Serverpod Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <style>
+        /* Object view specific styles */
+        .object-container {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .object-header {
+            background: #f8f9fa;
+            padding: 16px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .object-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+
+        .object-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-compact {
+            padding: 2px 5px;
+            border: none;
+            border-radius: 2px;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .object-content {
+            padding: 20px;
+        }
+
+        .field-group {
+            margin-bottom: 20px;
+        }
+
+        .field-label {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .field-value {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            min-height: 20px;
+            word-wrap: break-word;
+        }
+
+        .field-type {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-section h3 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #333;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 8px;
+        }
+
+        .sidebar-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar-btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .object-id {
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .empty-value {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .json-value {
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .boolean-value {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .boolean-true {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .boolean-false {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .date-value {
+            color: #007bff;
+        }
+
+        .number-value {
+            font-family: monospace;
+        }
+
+        .text-value {
+            line-height: 1.4;
+        }
+
+        .duration-value {
+            color: #17a2b8;
+            font-family: monospace;
+        }
+
+        .datetime-value-utc {
+            color: #007bff;
+            font-family: monospace;
+        }
+
+        .datetime-value-local{
+            color: #707070;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .bytedata-value {
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .uuid-value {
+            font-family: monospace;
+            font-size: 14px;
+            color: #6f42c1;
+        }
+
+        .uri-value {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .uri-value:hover {
+            text-decoration: underline;
+        }
+
+        .bigint-value {
+            font-family: monospace;
+            font-size: 14px;
+            color: #fd7e14;
+        }
+
+        .vector-value {
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .collection-value {
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <img src="/images/serverpod-admin-logo.png" width="200" style="margin-top: 8px; margin-bottom: 12px;">
+            <div class="header-links">
+                <a href="/" class="header-link">VIEW SITE</a>
+                <a href="/admin/password_change/" class="header-link">CHANGE PASSWORD</a>
+                <a href="/admin/logout/" class="header-link">LOG OUT</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-area">
+            <!-- Breadcrumb -->
+            <div style="margin-bottom: 20px;">
+                <a href="/admin/" style="color: #007bff; text-decoration: none;">← Back to Admin</a>
+                <span style="color: #6c757d; margin: 0 8px;">/</span>
+                <a href="{{table_url}}" style="color: #007bff; text-decoration: none;">{{class}}</a>
+                <span style="color: #6c757d; margin: 0 8px;">/</span>
+                <span style="color: #6c757d;">View</span>
+            </div>
+
+            <!-- Object Container -->
+            <div class="object-container">
+                <!-- Object Header -->
+                <div class="object-header">
+                    <div>
+                        <h1 class="object-title">View {{class}}</h1>
+                        <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;">
+                            Object ID: {{id}}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Object Content -->
+                <div class="object-content">
+                    {{#object_fields}}
+                    <div class="field-group">
+                        <label class="field-label">{{field_name}}</label>
+                        <div class="field-value">
+                            {{#has_value}}
+                                {{#field_type}}
+                                    {{#bool}}
+                                        <span class="boolean-value boolean-{{#field_value}}true{{/field_value}}{{^field_value}}false{{/field_value}}">{{field_value}}</span>
+                                    {{/bool}}
+                                    
+                                    {{#int}}
+                                        <span class="number-value">{{field_value}}</span>
+                                    {{/int}}
+                                    
+                                    {{#double}}
+                                        <span class="number-value">{{field_value}}</span>
+                                    {{/double}}
+                                    
+                                    {{#String}}
+                                        <span class="text-value">{{field_value}}</span>
+                                    {{/String}}
+                                    
+                                    {{#Duration}}
+                                        <span class="duration-value">{{field_value}}</span>
+                                    {{/Duration}}
+                                    
+                                    {{#DateTime}}
+                                        <time class="datetime-value-utc" datetime="{{field_value}}">{{field_value}}</time>
+                                        <time class="datetime-value-local" aria-label="Local time"></time>
+                                    {{/DateTime}}
+                                    
+                                    {{#ByteData}}
+                                        <div class="bytedata-value">{{field_value}}</div>
+                                    {{/ByteData}}
+                                    
+                                    {{#UuidValue}}
+                                        <span class="uuid-value">{{field_value}}</span>
+                                    {{/UuidValue}}
+                                    
+                                    {{#Uri}}
+                                        <a href="{{field_value}}" class="uri-value" target="_blank">{{field_value}}</a>
+                                    {{/Uri}}
+                                    
+                                    {{#BigInt}}
+                                        <span class="bigint-value">{{field_value}}</span>
+                                    {{/BigInt}}
+                                    
+                                    {{#Vector}}
+                                        <div class="vector-value">{{field_value}}</div>
+                                    {{/Vector}}
+
+                                    {{#is_list}}
+                                        <div class="collection-value">{{field_value}}</div>
+                                    {{/is_list}}
+
+                                    {{#is_map}}
+                                        <div class="collection-value">{{field_value}}</div>
+                                    {{/is_map}}
+
+                                    {{#is_set}}
+                                        <div class="collection-value">{{field_value}}</div>
+                                    {{/is_set}}
+
+
+                                    {{#is_related_object}}
+                                    <div class="collection-value">{{field_value}}</div>
+                                    <a href="{{view_related_object_url}}" class="btn-compact btn-primary">View Object</a>
+                                    {{/is_related_object}}
+
+                                    {{#is_related_object_list}}
+                                        {{#related_object_list}}
+                                        <div class="collection-value">{{related_object}}</div>
+                                        <a href="{{view_related_object_url}}" class="btn-compact btn-primary">View Object</a>
+                                        {{/related_object_list}}
+                                    {{/is_related_object_list}}
+                                {{/field_type}}
+                            {{/has_value}}
+                            {{^has_value}}
+                                <span class="empty-value">(empty)</span>
+                            {{/has_value}}
+                        </div>
+                        <div class="field-type">{{field_type}}</div>
+                    </div>
+                    {{/object_fields}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <h3>Object Information</h3>
+                <div class="object-id">ID: {{id}}</div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Actions</h3>
+                <div class="sidebar-actions">
+                    <a href="{{edit_url}}" class="sidebar-btn btn btn-primary">Edit {{class}}</a>
+                    <button class="sidebar-btn btn btn-danger" onclick="deleteObject('{{delete_url}}','{{table_url}}')">Delete {{class}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // to also show local version of any utc datetime that is being shown 
+        document.addEventListener('DOMContentLoaded', function() {
+            // find all the UTC <time> elements
+            document.querySelectorAll('time.datetime-value-utc').forEach(function(utcEl) {
+              // grab the ISO string
+              var iso = utcEl.getAttribute('datetime');
+              console.log(iso);
+              // parse it into a Date in the visitor's timezone
+              var localDate = new Date(iso);
+              // format however you like:
+              var localStr = formatLocalDate(localDate); 
+              // find the next element, which we left empty
+              var localEl = utcEl.nextElementSibling;
+              if (localEl && localEl.classList.contains('datetime-value-local')) {
+                localEl.textContent = `  --  Local version: ${localStr}`;
+              }
+            });
+          });
+
+        // Format a Date as "YYYY-MM-DD HH:MM:SS.mmm"
+        function formatLocalDate(date) {
+            const Y = date.getFullYear();
+            const M = pad(date.getMonth() + 1, 2);
+            const D = pad(date.getDate(), 2);
+            const h = pad(date.getHours(), 2);
+            const m = pad(date.getMinutes(), 2);
+            const s = pad(date.getSeconds(), 2);
+            const ms = pad(date.getMilliseconds(), 3);
+            return `${Y}-${M}-${D} ${h}:${m}:${s}.${ms}`;
+        }
+
+        // Helper to left-pad numbers with zeros
+        function pad(num, size) {
+            let s = String(num);
+            while (s.length < size) s = '0' + s;
+            return s;
+        }
+
+        function deleteObject(deleteUrl, tableUrl) {
+            if (confirm('Are you sure you want to delete this {{class}}? This action cannot be undone.')) {
+                fetch(`${deleteUrl}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }).then(response => {
+                    console.log(response);
+                    if (response.ok) {
+                        console.log(`going to ${tableUrl}`);
+                        window.location.href = tableUrl;
+                    } else {
+                        console.log('response not ok:')
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

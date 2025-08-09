@@ -1,0 +1,12 @@
+import 'package:serverpod/serverpod.dart';
+
+class BulkAddPage extends Widget {
+  final String resource;
+  BulkAddPage({required this.resource}) : super(name: 'bulk_add_page') {
+    values = {
+      'class': resource,
+      'bulk_save_url': '/admin/bulk-save/$resource',
+      'table_url': '/admin/list/$resource',
+    };
+  }
+}

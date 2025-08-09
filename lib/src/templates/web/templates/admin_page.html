@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serverpod admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <img src="/images/serverpod-admin-logo.png" width="200" style="margin-top: 8px; margin-bottom: 12px;">
+            <div class="header-links">
+                <a href="/" class="header-link">VIEW SITE</a>
+                <a href="/admin/password_change/" class="header-link">CHANGE PASSWORD</a>
+                <a href="/admin/logout/" class="header-link">LOG OUT</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-area">
+            <h1 class="site-admin-title">Site administration</h1>
+            
+            {{#app_list}}
+            <div class="app-group">
+                <div class="app-group-header">{{app_name}}</div>
+                <div class="model-list">
+                    {{#models}}
+                    <div class="model-item">
+                        <div class="model-info">
+                            <a href="{{model_url}}" class="model-link">{{model_name}}</a>
+                        </div>
+                        <div class="model-actions">
+                            <a href="{{add_url}}" class="action-link add-link">+ Add</a>
+                        </div>
+                    </div>
+                    {{/models}}
+                </div>
+            </div>
+            {{/app_list}}
+        </div>
+    </div>
+</body>
+</html>

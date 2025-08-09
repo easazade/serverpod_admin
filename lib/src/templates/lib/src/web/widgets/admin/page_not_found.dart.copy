@@ -1,0 +1,5 @@
+import 'package:serverpod/serverpod.dart';
+
+class PageNotFound extends Widget {
+  PageNotFound() : super(name: 'page_not_found');
+}

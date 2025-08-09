@@ -1,0 +1,24 @@
+import 'package:recase/recase.dart';
+import 'package:serverpod/serverpod.dart';
+
+class AdminPage extends Widget {
+  final List<String> classNames;
+
+  AdminPage({required this.classNames}) : super(name: 'admin_page') {
+    values = {
+      "app_list": [
+        {
+          "app_name": "Tables",
+          "models": [
+            for (var item in classNames)
+              {
+                "model_name": item.pascalCase,
+                "model_url": "/admin/list/$item",
+                "add_url": "/admin/add/$item",
+              },
+          ]
+        }
+      ],
+    };
+  }
+}

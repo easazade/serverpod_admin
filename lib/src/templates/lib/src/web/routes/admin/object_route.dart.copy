@@ -1,0 +1,105 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
+import 'package:{{server_package_name}}/src/web/widgets/admin/add_object_page.dart';
+import 'package:{{server_package_name}}/src/web/widgets/admin/edit_object_page.dart';
+import 'package:{{server_package_name}}/src/web/widgets/admin/error_page.dart';
+import 'package:{{server_package_name}}/src/web/widgets/admin/page_not_found.dart';
+import 'package:{{server_package_name}}/src/web/widgets/admin/view_object_page.dart';
+import 'package:serverpod/serverpod.dart';
+
+class ObjectRoute extends WidgetRoute {
+  final allowedActions = {'view', 'add', 'edit', 'delete', 'save'};
+
+  @override
+  void setHeaders(HttpHeaders headers) {
+    super.setHeaders(headers);
+    headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  }
+
+  @override
+  Future<AbstractWidget> build(Session session, HttpRequest request) async {
+    print(request.uri.toString());
+    final resourceNames = modelsMap.keys;
+    final resource = request.uri.pathSegments[2].toLowerCase();
+    String? id;
+
+    if (!resourceNames.contains(resource)) {
+      return PageNotFound();
+    }
+
+    if (request.uri.pathSegments.length >= 4) {
+      id = request.uri.pathSegments[3];
+    }
+
+    final action = request.uri.pathSegments[1].toLowerCase();
+    if (!allowedActions.contains(action)) {
+      return PageNotFound();
+    }
+
+    print('Start to do action($action) on $resource with $id');
+
+    if (action == 'add') {
+      return AddObjectPage(resource: resource);
+    } else if (action == 'delete' && id != null) {
+      print('deleting $id redirecting :)');
+      await deleteResource(session, resource, id);
+      return WidgetRedirect(url: '/admin/list/$resource');
+    } else if (action == 'save') {
+      final jsonString = await utf8.decoder.bind(request).join();
+      var json = jsonDecode(jsonString) as Map<String, dynamic>;
+      json = json.entries.map((entry) {
+        final fieldName = entry.key;
+        var fieldValue = entry.value;
+        final fieldType = modelsMap[resource]['schema'][fieldName].toString();
+        if (fieldValue == null || fieldValue == 'null') {
+          return MapEntry(fieldName, null);
+        } else if (fieldType.startsWith('int')) {
+          return MapEntry(fieldName, int.parse(fieldValue.toString()));
+        } else if (fieldType.startsWith('double')) {
+          return MapEntry(fieldName, double.parse(fieldValue.toString()));
+        } else if (fieldType.startsWith('bool')) {
+          return MapEntry(fieldName, bool.parse(fieldValue.toString()));
+        }
+
+        return MapEntry(fieldName, fieldValue);
+      }).toMap();
+
+      print(jsonEncode(json));
+      final updated = await insertOrUpdateResource(session, resource, json, id);
+      return ViewObjectPage(resource: resource, id: updated['id'], object: updated);
+    } else if ((action == 'view' || action == 'edit') && id != null) {
+      Map<String, dynamic>? object;
+
+      try {
+        object = await findResourceById(session, resource, id);
+      } catch (e) {
+        print(e);
+        return ErrorPage(session: session, error: 'Error when trying to find "$resource" by id "$id"');
+      }
+
+      if (object == null) {
+        return PageNotFound();
+      }
+
+      if (action == 'view') {
+        return ViewObjectPage(resource: resource, id: id, object: object);
+      } else if (action == 'edit') {
+        return EditObjectPage(resource: resource, id: id, object: object);
+      } else {
+        return ErrorPage(session: session, error: 'Only allowed actions are $allowedActions');
+      }
+    } else {
+      return ErrorPage(session: session, error: 'Only allowed actions are $allowedActions');
+    }
+  }
+}
+
+extension MapEntryListX<K, V> on Iterable<MapEntry<K, V>> {
+  Map<K, V> toMap() {
+    final Map<K, V> map = {};
+    map.addEntries(this);
+    return map;
+  }
+}

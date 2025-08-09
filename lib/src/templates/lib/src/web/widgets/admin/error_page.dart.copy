@@ -1,0 +1,14 @@
+import 'package:serverpod/serverpod.dart';
+
+class ErrorPage extends Widget {
+  final Session session;
+  final String error;
+  ErrorPage({
+    required this.session,
+    required this.error,
+  }) : super(name: 'error_page') {
+    values = {
+      if (session.serverpod.runMode == 'development') 'error': error,
+    };
+  }
+}

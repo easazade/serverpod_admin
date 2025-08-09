@@ -1,0 +1,100 @@
+import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
+import 'package:recase/recase.dart';
+import 'package:serverpod/serverpod.dart';
+
+class EditObjectPage extends Widget {
+  String resource;
+  final String? id;
+  final Map<String, dynamic> object;
+
+  EditObjectPage({
+    required this.resource,
+    required this.id,
+    required this.object,
+  }) : super(name: 'edit_object_page') {
+    resource = resource.toLowerCase();
+    // Generate object fields similar to ViewObjectPage
+    final List<Map<String, dynamic>> objectFields = object.entries.map((entry) {
+      final fieldName = entry.key;
+      final fieldValue = entry.value;
+      final fieldType = modelsMap[resource]['schema'][fieldName]!.toString();
+      final nonNullableFieldType = fieldType.replaceAll('?', '');
+      final isRequired = !fieldType.endsWith('?');
+
+      return <String, dynamic>{
+        "field_name": fieldName,
+        "field_value": fieldValue,
+        "field_type": nonNullableFieldType,
+        "required": isRequired,
+      };
+    }).map((objectField) {
+      final json = <String, dynamic>{}..addAll(objectField);
+
+      json.addAll({
+        'error': null,
+        'has_value': json['field_value'] != null,
+        'bool': json['field_type'] == 'bool',
+        'int': json['field_type'] == 'int',
+        'double': json['field_type'] == 'double',
+        'String': json['field_type'] == 'String',
+        'Duration': json['field_type'] == 'Duration',
+        'DateTime': json['field_type'] == 'DateTime',
+        'ByteData': json['field_type'] == 'ByteData',
+        'UuidValue': json['field_type'] == 'UuidValue',
+        'Uri': json['field_type'] == 'Uri',
+        'BigInt': json['field_type'] == 'BigInt',
+        'Vector': json['field_type'] == 'Vector',
+
+        'is_list': json['field_type'].toString().startsWith('List'),
+        'is_set': json['field_type'].toString().startsWith('Set'),
+        'is_map': json['field_type'].toString().startsWith('Map'),
+
+        // list
+        'is_list_string': json['field_type'].toString().startsWith('List<String>'),
+        'is_list_int': json['field_type'].toString().startsWith('List<int>'),
+        'is_list_double': json['field_type'].toString().startsWith('List<double>'),
+        'is_list_num': json['field_type'].toString().startsWith('List<num>'),
+        'is_list_bool': json['field_type'].toString().startsWith('List<bool>'),
+
+        // set
+        'is_set_string': json['field_type'].toString().startsWith('Set<String>'),
+        'is_set_int': json['field_type'].toString().startsWith('Set<int>'),
+        'is_set_double': json['field_type'].toString().startsWith('Set<double>'),
+        'is_set_num': json['field_type'].toString().startsWith('Set<num>'),
+        'is_set_bool': json['field_type'].toString().startsWith('Set<bool>'),
+
+        // map
+        'is_map_string_string': json['field_type'].toString().startsWith('Map<String, String>'),
+        'is_map_string_int': json['field_type'].toString().startsWith('Map<String, int>'),
+        'is_map_string_double': json['field_type'].toString().startsWith('Map<String, double>'),
+        'is_map_string_num': json['field_type'].toString().startsWith('Map<String, num>'),
+        'is_map_string_bool': json['field_type'].toString().startsWith('Map<String, bool>'),
+
+        // since mustache cannot iterate maps like it does for lists a simplified list of map entries is added.
+        'map_entries': json['field_type'].toString().startsWith('Map')
+            ? (json['field_value'] as Map<String, dynamic>).entries.map((entry) {
+                return <String, dynamic>{'key': entry.key, 'value': entry.value};
+              }).toList()
+            : null,
+
+        // for mustache simple processing of lists, sets
+        'list_items':
+            json['field_type'].toString().startsWith('List') || json['field_type'].toString().startsWith('Set')
+                ? (json['field_value'] as List).map((e) => {'list_item': e})
+                : null,
+      });
+
+      return json;
+    }).toList();
+
+    values = {
+      "id": id,
+      "table_url": "/admin/list/$resource",
+      "view_url": "/admin/view/$resource/$id",
+      "save_url": "/admin/save/$resource/$id",
+      "delete_url": "/admin/delete/$resource/$id",
+      "class": resource.pascalCase,
+      "object_fields": objectFields,
+    };
+  }
+}

@@ -1,0 +1,91 @@
+import 'package:recase/recase.dart';
+import 'package:serverpod/serverpod.dart';
+
+class TablePage extends Widget {
+  final String className;
+  final String tableName;
+  final List<TableColumn> columns;
+  final List<Map<String, dynamic>> rows;
+  final String currentSortColumn;
+  final String sortDirection;
+
+  TablePage({
+    required this.className,
+    required this.tableName,
+    required this.columns,
+    required this.rows,
+    required this.currentSortColumn,
+    this.sortDirection = 'asc',
+  }) : super(name: 'table_page') {
+    final compactColumns = columns.take(5);
+
+    final compactRows = rows.map((json) {
+      final compactRow = <String, dynamic>{};
+
+      compactRow.addEntries({
+        for (var column in compactColumns) MapEntry(column.name, json[column.name]),
+      });
+
+      return compactRow;
+    }).toList();
+
+    values = {
+      className: className.pascalCase,
+      "table_name": tableName.pascalCase,
+      "table_name_singular": className.pascalCase,
+      "table_name_lower": tableName.toLowerCase(),
+      "total_records": rows.length,
+      "plural": rows.length > 1,
+      "has_records": rows.isNotEmpty,
+      "current_sort_column": currentSortColumn,
+      "current_sort_direction": sortDirection,
+      "columns": compactColumns
+          .map((column) => {
+                "name": column.name,
+                "display_name": column.displayName,
+                "is_sorted": column.isSorted,
+                "sort_asc": column.sortAscending,
+              })
+          .toList(),
+      "records": compactRows
+          .map(
+            (row) => {
+              "id": row['id'],
+              "selected": false,
+              "values": row.entries
+                  .map(
+                    (property) => {
+                      "value": property.value.toString(),
+                      "is_status": false,
+                      "is_link": false,
+                      "truncate": false,
+                    },
+                  )
+                  .toList(),
+              "view_url": "/admin/view/${className.toLowerCase()}/${row['id']}",
+              "edit_url": "/admin/edit/${className.toLowerCase()}/${row['id']}",
+              "delete_url": "/admin/delete/${className.toLowerCase()}/${row['id']}"
+            },
+          )
+          .toList(),
+      "add_url": "/admin/add/${className.toLowerCase()}",
+      "bulk_add_url": "/admin/bulk-add/${className.toLowerCase()}",
+      "bulk_delete_url": "/admin/list/${className.toLowerCase()}",
+      "table_url": "/admin/list/${className.toLowerCase()}",
+    };
+  }
+}
+
+class TableColumn {
+  final String name;
+  final String displayName;
+  final bool isSorted;
+  final bool sortAscending;
+
+  TableColumn({
+    required this.name,
+    required this.displayName,
+    required this.isSorted,
+    required this.sortAscending,
+  });
+}

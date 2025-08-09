@@ -1,0 +1,89 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
+import 'package:{{server_package_name}}/src/web/widgets/admin/bulk_add_page.dart';
+import 'package:{{server_package_name}}/src/web/widgets/admin/page_not_found.dart';
+import 'package:{{server_package_name}}/src/web/widgets/admin/table_page.dart';
+import 'package:recase/recase.dart';
+import 'package:serverpod/serverpod.dart';
+
+class TableRoute extends WidgetRoute {
+  @override
+  void setHeaders(HttpHeaders headers) {
+    super.setHeaders(headers);
+    headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  }
+
+  @override
+  Future<AbstractWidget> build(Session session, HttpRequest request) async {
+    final resource = request.uri.pathSegments[2].toLowerCase();
+    final action = request.uri.pathSegments[1].toLowerCase();
+    final method = request.method.toLowerCase();
+
+    if (action == 'bulk-add') {
+      return BulkAddPage(resource: resource);
+    } else if (action == 'bulk-save') {
+      final jsonString = await utf8.decoder.bind(request).join();
+      var jsonList = (jsonDecode(jsonString) as List).map((e) => e as Map<String, dynamic>).toList();
+
+      for (var json in jsonList) {
+        await insertOrUpdateResource(session, resource, json, json["id"]);
+      }
+
+      return await _createTablePage(session, resource);
+    } else if (action == 'list') {
+      if (method == 'post') {
+        final jsonString = await utf8.decoder.bind(request).join();
+        final Map<String, dynamic> jsonBody = jsonDecode(jsonString);
+        final List deleteIds = jsonBody["delete_ids"];
+        print('deleting $resource objects with ids: $deleteIds');
+
+        for (final id in deleteIds) {
+          await deleteResource(session, resource, id);
+        }
+      }
+
+      return await _createTablePage(session, resource);
+    } else {
+      return PageNotFound();
+    }
+  }
+
+  Future<AbstractWidget> _createTablePage(
+    Session session,
+    String resource,
+  ) async {
+    List<Map<String, dynamic>> rows = await listResources(session, resource);
+
+    final columns = (modelsMap[resource]!['columns'] as List<String>);
+
+    rows = rows.map((json) {
+      final compactRow = <String, dynamic>{};
+
+      compactRow.addEntries({
+        for (var column in columns) MapEntry(column, json[column]),
+      });
+
+      return compactRow;
+    }).toList();
+
+    return TablePage(
+      className: resource,
+      tableName: modelsMap[resource]!['table'].toString(),
+      rows: rows,
+      columns: columns
+          .map(
+            (column) => TableColumn(
+              name: column,
+              displayName: column.pascalCase,
+              isSorted: false,
+              sortAscending: false,
+            ),
+          )
+          .toList(),
+      currentSortColumn: columns.first,
+      sortDirection: 'asc',
+    );
+  }
+}

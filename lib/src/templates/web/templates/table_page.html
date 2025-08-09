@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{table_name}} - Serverpod Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <style>
+        /* Table-specific styles */
+        .table-container {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .table-header {
+            background: #f8f9fa;
+            padding: 16px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .table-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-box {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .data-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: top;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .data-table tbody tr.selected {
+            background: #e3f2fd;
+        }
+
+        .checkbox-cell {
+            width: 40px;
+            text-align: center;
+        }
+
+        .checkbox-cell input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .action-cell {
+            width: 120px;
+            text-align: center;
+        }
+
+        .action-links {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .action-link {
+            text-decoration: none;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .bulk-actions {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-bottom: 1px solid #ddd;
+            display: none;
+        }
+
+        .bulk-actions.show {
+            display: block;
+        }
+
+        .bulk-actions-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .column-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .column-header:hover {
+            background: #e9ecef;
+        }
+
+        .sort-indicator {
+            margin-left: 5px;
+            font-size: 12px;
+        }
+
+        .filter-dropdown {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .text-truncate {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <img src="/images/serverpod-admin-logo.png" width="200" style="margin-top: 8px; margin-bottom: 12px;">
+            <div class="header-links">
+                <a href="/" class="header-link">VIEW SITE</a>
+                <a href="/admin/password_change/" class="header-link">CHANGE PASSWORD</a>
+                <a href="/admin/logout/" class="header-link">LOG OUT</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-area">
+            <!-- Breadcrumb -->
+            <div style="margin-bottom: 20px;">
+                <a href="/admin/" style="color: #007bff; text-decoration: none;">← Back to Admin</a>
+            </div>
+
+            <!-- Table Container -->
+            <div class="table-container">
+                <!-- Table Header -->
+                <div class="table-header">
+                    <div>
+                        <h1 class="table-title">{{table_name}}</h1>
+                        <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;">
+                            {{total_records}} record{{#plural}}s{{/plural}} found
+                        </p>
+                    </div>
+                    <div class="table-actions">
+                        <input type="text" class="search-box" placeholder="Search..." id="searchInput">
+                        <select class="filter-dropdown" id="filterColumn">
+                            <option value="">Search all columns</option>
+                            {{#columns}}
+                            <option value="{{name}}">Search {{display_name}}</option>
+                            {{/columns}}
+                        </select>
+                        <a href="{{add_url}}" class="btn btn-success">+ Add</a>
+                        <a href="{{bulk_add_url}}" class="btn btn-success">+ Add Bulk</a>
+                    </div>
+                </div>
+
+                <!-- Bulk Actions Bar -->
+                <div class="bulk-actions" id="bulkActions">
+                    <div class="bulk-actions-content">
+                        <span id="selectedCount">0 items selected</span>
+                        <button class="btn btn-primary" onclick="executeBulkDelete('{{bulk_delete_url}}', '{{table_url}}')">Delete</button>
+                        <button class="btn btn-secondary" onclick="clearSelection()">Clear selection</button>
+                    </div>
+                </div>
+
+                <!-- Table Content -->
+                <div class="table-wrapper">
+
+                    {{#has_records}}
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-cell">
+                                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                </th>
+                                {{#columns}}
+                                <th class="column-header" onclick="sortTable('{{name}}')">
+                                    {{display_name}}
+                                    <span class="sort-indicator">
+                                        {{#is_sorted}}
+                                        {{#sort_asc}}↑{{/sort_asc}}
+                                        {{^sort_asc}}↓{{/sort_asc}}
+                                        {{/is_sorted}}
+                                    </span>
+                                </th>
+                                {{/columns}}
+                                <th class="action-cell">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#records}}
+                            <tr data-id="{{id}}" class="{{#selected}}selected{{/selected}}">
+                                <td class="checkbox-cell">
+                                    <input type="checkbox" class="row-checkbox" value="{{id}}" onchange="updateSelection()">
+                                </td>
+                                {{#values}}
+                                <td class="{{#truncate}}text-truncate{{/truncate}}">
+                                    {{#is_status}}
+                                    <span class="status-badge status-{{value_class}}">{{value}}</span>
+                                    {{/is_status}}
+                                    {{^is_status}}
+                                    {{#is_link}}
+                                    <a href="{{link_url}}" style="color: #007bff; text-decoration: none;">{{value}}</a>
+                                    {{/is_link}}
+                                    {{^is_link}}
+                                    {{value}}
+                                    {{/is_link}}
+                                    {{/is_status}}
+                                </td>
+                                {{/values}}
+                                <td class="action-cell">
+                                    <div class="action-links">
+                                        <a href="{{view_url}}" class="action-link" style="background: #17a2b8; color: white;">View</a>
+                                        <a href="{{edit_url}}" class="action-link" style="background: #ffc107; color: #212529;">Edit</a>
+                                        <a href="{{delete_url}}" class="action-link" style="background: #dc3545; color: white;" 
+                                           onclick="return confirm('Are you sure you want to delete this record?')">Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{/records}}
+                        </tbody>
+                    </table>
+                    {{/has_records}}
+                    
+                    {{^has_records}}
+                    <div class="empty-state">
+                        <h3>No {{table_name_lower}} found</h3>
+                        <p>There are no {{table_name_lower}} in the database yet.</p>
+                        <a href="{{add_url}}" class="btn btn-success" style="margin-top: 10px;">Add your first {{table_name_singular}}</a>
+                    </div>
+                    {{/has_records}}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let selectedRows = new Set();
+        let currentSortColumn = '{{current_sort_column}}';
+        let currentSortDirection = '{{current_sort_direction}}';
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const filterColumn = document.getElementById('filterColumn').value;
+            const rows = document.querySelectorAll('#dataTable tbody tr');
+            
+            rows.forEach(row => {
+                let shouldShow = true;
+                
+                if (searchTerm) {
+                    if (filterColumn) {
+                        // Filter by specific column
+                        const columnIndex = getColumnIndex(filterColumn);
+                        const cell = row.cells[columnIndex];
+                        shouldShow = cell.textContent.toLowerCase().includes(searchTerm);
+                    } else {
+                        // Filter by all columns
+                        const cells = row.cells;
+                        shouldShow = Array.from(cells).some(cell => 
+                            cell.textContent.toLowerCase().includes(searchTerm)
+                        );
+                    }
+                }
+                
+                row.style.display = shouldShow ? '' : 'none';
+            });
+        });
+
+        // Column filtering
+        document.getElementById('filterColumn').addEventListener('change', function() {
+            document.getElementById('searchInput').dispatchEvent(new Event('input'));
+        });
+
+        // Row selection
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+                if (selectAll.checked) {
+                    selectedRows.add(checkbox.value);
+                    checkbox.closest('tr').classList.add('selected');
+                } else {
+                    selectedRows.delete(checkbox.value);
+                    checkbox.closest('tr').classList.remove('selected');
+                }
+            });
+            
+            updateBulkActions();
+        }
+
+        function updateSelection() {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            const selectAll = document.getElementById('selectAll');
+            
+            selectedRows.clear();
+            let allChecked = true;
+            
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedRows.add(checkbox.value);
+                    checkbox.closest('tr').classList.add('selected');
+                } else {
+                    checkbox.closest('tr').classList.remove('selected');
+                    allChecked = false;
+                }
+            });
+            
+            selectAll.checked = allChecked;
+            updateBulkActions();
+        }
+
+        function updateBulkActions() {
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (selectedRows.size > 0) {
+                bulkActions.classList.add('show');
+                selectedCount.textContent = `${selectedRows.size} item${selectedRows.size > 1 ? 's' : ''} selected`;
+            } else {
+                bulkActions.classList.remove('show');
+            }
+        }
+
+        function clearSelection() {
+            selectedRows.clear();
+            document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.getElementById('selectAll').checked = false;
+            document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+                row.classList.remove('selected');
+            });
+            updateBulkActions();
+        }
+
+        function executeBulkDelete(deleteUrl, tableUrl) {
+            const selectedIds = Array.from(selectedRows);
+            
+            if (selectedIds.length === 0) {
+                alert('Please select at least one item');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete ${selectedIds.length} item${selectedIds.length > 1 ? 's' : ''}?`)) {
+                // Send delete request
+                fetch(deleteUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        'delete_ids': selectedIds,
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Error deleting items');
+                    }
+                });
+            }
+        }
+
+        function sortTable(column) {
+            const currentUrl = new URL(window.location);
+            
+            if (currentSortColumn === column) {
+                // Toggle direction
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                // New column, default to ascending
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+            
+            currentUrl.searchParams.set('sort', column);
+            currentUrl.searchParams.set('direction', currentSortDirection);
+            
+            window.location.href = currentUrl.toString();
+        }
+
+        function getColumnIndex(columnName) {
+            const headers = document.querySelectorAll('#dataTable thead th');
+            for (let i = 0; i < headers.length; i++) {
+                if (headers[i].textContent.trim().toLowerCase().includes(columnName.toLowerCase())) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateBulkActions();
+        });
+    </script>
+</body>
+</html>
