@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:serverpod_admin/src/copier.dart';
 import 'package:serverpod_admin/src/file_generators/admin_route_generator.dart';
 import 'package:serverpod_admin/src/file_generators/admin_utils_generator.dart';
 import 'package:serverpod_admin/src/scanner.dart';
@@ -38,4 +39,7 @@ void main(List<String> args) async {
   for (var file in generatableFiles) {
     await file.createFile();
   }
+
+  final copier = Copier(serverPath: serverDir.path);
+  await copier.copy();
 }
