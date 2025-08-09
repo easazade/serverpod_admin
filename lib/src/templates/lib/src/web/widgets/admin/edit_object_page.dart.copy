@@ -13,8 +13,11 @@ class EditObjectPage extends Widget {
     required this.object,
   }) : super(name: 'edit_object_page') {
     resource = resource.toLowerCase();
-    // Generate object fields similar to ViewObjectPage
-    final List<Map<String, dynamic>> objectFields = object.entries.map((entry) {
+    final List<Map<String, dynamic>> objectFields = object.entries.where((entry) {
+      final fieldName = entry.key;
+      final isPrivateField = fieldName.startsWith('_');
+      return !isPrivateField;
+    }).map((entry) {
       final fieldName = entry.key;
       final fieldValue = entry.value;
       final fieldType = modelsMap[resource]['schema'][fieldName]!.toString();

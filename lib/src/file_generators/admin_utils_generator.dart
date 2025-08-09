@@ -202,7 +202,9 @@ class AdminUtilsGenerator extends FileGenerator {
               'final updated = await insertOrUpdateResource(session, "$nonNullableType", row.${relatedField.name}!.toJson(), row.${relatedField.name}!.id.toString());',
             );
 
-            buffer.writeln('await ${entity.name}.db.attachRow.${relatedField.name}(session, updatedRow, $nonNullableType.fromJson(updated));');
+            buffer.writeln(
+              'await ${entity.name}.db.attachRow.${relatedField.name}(session, updatedRow, $nonNullableType.fromJson(updated));',
+            );
           }
           buffer.writeln('}');
         }
