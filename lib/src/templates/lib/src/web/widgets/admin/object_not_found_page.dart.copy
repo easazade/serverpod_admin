@@ -1,0 +1,19 @@
+import 'package:serverpod/serverpod.dart';
+
+class ObjectNotFoundPage extends Widget {
+  final String resource;
+  final String id;
+  final String tableUrl;
+
+  ObjectNotFoundPage({
+    required this.resource,
+    required this.id,
+    required this.tableUrl,
+  }) : super(name: 'object_not_found') {
+    values = {
+      'id': id,
+      'class': resource,
+      'table_url': tableUrl,
+    };
+  }
+}
