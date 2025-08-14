@@ -55,6 +55,9 @@ class AdminUtilsGenerator extends FileGenerator {
 
     buffer.writeln('// ignore_for_file: depend_on_referenced_packages, unused_import, duplicate_import'); // ignored lint rule
     buffer.writeln("import 'package:$serverPackageName/src/generated/protocol.dart';"); // import
+    buffer.writeln('import "package:$serverPackageName/src/web/routes/admin/admin_route.dart";');
+    buffer.writeln('import "package:$serverPackageName/src/web/routes/admin/object_route.dart";');
+    buffer.writeln('import "package:$serverPackageName/src/web/routes/admin/table_route.dart";');
     buffer.writeln("import 'package:uuid/v7.dart';"); // import
     buffer.writeln("import 'package:uuid/v4.dart';"); // import
     buffer.writeln("import 'package:serverpod/serverpod.dart';"); // import
@@ -246,6 +249,23 @@ class AdminUtilsGenerator extends FileGenerator {
     buffer.writeln('    return null;');
     buffer.writeln('  }');
     buffer.writeln('}'); // newUuidForResource end
+
+    buffer.writeln('void appendAdminRoutes(Serverpod pod){'); // appendAdminRoutes() start
+    buffer.writeln('''
+      pod.webServer.addRoute(AdminRoute(), '/admin');
+      pod.webServer.addRoute(AdminRoute(), '/admin/');
+
+      pod.webServer.addRoute(TableRoute(), '/admin/list/*');
+      pod.webServer.addRoute(TableRoute(), '/admin/bulk-add/*');
+      pod.webServer.addRoute(TableRoute(), '/admin/bulk-save/*');
+
+      pod.webServer.addRoute(ObjectRoute(), '/admin/view/*');
+      pod.webServer.addRoute(ObjectRoute(), '/admin/edit/*');
+      pod.webServer.addRoute(ObjectRoute(), '/admin/save/*');
+      pod.webServer.addRoute(ObjectRoute(), '/admin/delete/*');
+      pod.webServer.addRoute(ObjectRoute(), '/admin/add/*');
+    ''');
+    buffer.writeln('}'); // appendAdminRoutes() end
 
     return buffer.toString();
   }
