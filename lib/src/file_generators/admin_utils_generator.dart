@@ -105,7 +105,7 @@ class AdminUtilsGenerator extends FileGenerator {
           "class": "${entity.name}",
           "columns": [${entity.fields.map((e) => e.name).toList().map((e) => '"$e"').join(',')}],
           "schema": $schema,
-          "related_fields": <String, dynamic>{${entity.fields.where((e) => e.relation != null).map((e) => '"${e.name}": "${e.type}"').join(',')}},
+          "related_fields": <String, dynamic>{${entity.fields.where((e) => e.relation != null && e.relation?.parent == null).map((e) => '"${e.name}": "${e.type}"').join(',')}},
         },
       ''');
     }
