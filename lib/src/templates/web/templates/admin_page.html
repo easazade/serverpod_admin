@@ -5,6 +5,247 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Serverpod admin</title>
     <link rel="stylesheet" href="/css/admin.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
+        }
+        
+        body {
+            font-size: 13px;
+            line-height: 1.4;
+            color: #333;
+            background: #f8f8f8;
+        }
+        
+        /* Header */
+        .header {
+            background: #ffffff;
+            color: #fff;
+            padding: 8px 16px;
+            border-bottom: 1px solid #dc3545;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            
+            margin: 0 auto;
+        }
+        
+        .header-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        
+        .header-links {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .header-link {
+            color: #000;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        .header-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* Main Container */
+        .main-container {
+            display: flex;
+            
+            margin: 0 auto;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+        }
+        
+        .site-admin-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        /* App Groups */
+        .app-group {
+            margin-bottom: 30px;
+        }
+        
+        .app-group-header {
+            background: #ffbfc5;
+            color: #000;
+            padding: 8px 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px 4px 0 0;
+            text-transform: uppercase;
+        }
+        
+        .model-list {
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+        }
+        
+        .model-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .model-item:last-child {
+            border-bottom: none;
+        }
+        
+        .model-item:hover {
+            background: #f9f9f9;
+        }
+        
+        .model-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            height: 20px;
+        }
+        
+        .model-link {
+            color: #000;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        
+        .model-link:hover {
+            text-decoration: underline;
+        }
+        
+        .model-count {
+            margin-left: 4px;
+            font-size: 10px;
+            color: #4f4f4f;
+        }
+        
+        .model-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-link {
+            text-decoration: none;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .add-link {
+            background: #1bc715;
+            color: #fff;
+        }
+        
+        .add-link:hover {
+            background: #148b10;
+        }
+        
+        .change-link {
+            background: #ff6b6b;
+            color: #fff;
+        }
+        
+        .change-link:hover {
+            background: #e74c3c;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            height: fit-content;
+        }
+        
+        .recent-actions h2 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .recent-actions h3 {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #666;
+        }
+        
+        .action-item {
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        
+        .action-type {
+            color: #666;
+            font-style: italic;
+        }
+        
+        .action-object {
+            color: #e74c3c;
+            text-decoration: none;
+            margin-left: 4px;
+        }
+        
+        .action-object:hover {
+            text-decoration: underline;
+        }
+        
+        .no-actions {
+            color: #999;
+            font-style: italic;
+            font-size: 12px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                padding: 10px;
+            }
+            
+            .sidebar {
+                width: 100%;
+                order: -1;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+            
+            .header-links {
+                justify-content: center;
+            }
+        } 
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -31,7 +272,8 @@
                     {{#models}}
                     <div class="model-item">
                         <div class="model-info">
-                            <a href="{{model_url}}" class="model-link">{{model_name}}</a>
+                            <a href="{{model_url}}" class="model-link">{{model_name}} </a>
+                            <span class="model-count">({{count}})</span>
                         </div>
                         <div class="model-actions">
                             <a href="{{add_url}}" class="action-link add-link">+ Add</a>

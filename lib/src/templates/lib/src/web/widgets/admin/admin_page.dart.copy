@@ -3,20 +3,24 @@ import 'package:serverpod/serverpod.dart';
 
 class AdminPage extends Widget {
   final List<String> classNames;
+  final Map<String, int> objectCount;
 
-  AdminPage({required this.classNames}) : super(name: 'admin_page') {
+  AdminPage({
+    required this.classNames,
+    required this.objectCount,
+  }) : super(name: 'admin_page') {
     values = {
       "app_list": [
         {
           "app_name": "Tables",
-          "models": [
-            for (var item in classNames)
-              {
-                "model_name": item.pascalCase,
-                "model_url": "/admin/list/$item",
-                "add_url": "/admin/add/$item",
-              },
-          ]
+          "models": classNames.map(
+            (className) => {
+              "model_name": className.pascalCase,
+              "model_url": "/admin/list/$className",
+              "add_url": "/admin/add/$className",
+              "count": objectCount[className],
+            },
+          )
         }
       ],
     };

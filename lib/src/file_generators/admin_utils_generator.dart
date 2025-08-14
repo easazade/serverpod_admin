@@ -114,7 +114,7 @@ class AdminUtilsGenerator extends FileGenerator {
     buffer.writeln('\n\n'); // adding empty space;
 
     buffer.writeln(
-      'Future<Map<String, dynamic>?> findResourceById(Session session, String resource, dynamic id,) async{',
+      'Future<Map<String, dynamic>?> findResourceById(Session session, String resource, dynamic id) async{',
     ); // findResourceById() start
     buffer.writeln('final isIdInteger = int.tryParse(id.toString()) != null;');
 
@@ -136,13 +136,17 @@ class AdminUtilsGenerator extends FileGenerator {
     buffer.writeln("throw Exception('Could not find any resource called \$resource');");
     buffer.writeln('}'); // findResourceById() end
 
-    buffer.writeln('Future<Iterable<Map<String, dynamic>>> listResources(Session session, String resource) async {'); // listResources() start
+    buffer.writeln(
+      'Future<Iterable<Map<String, dynamic>>> listResources(Session session, String resource) async {',
+    ); // listResources() start
     for (final entity in classes) {
       buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}"){');
       final includeParameterValue = includeValueForResource(entity, classes);
       final includeParameter = includeParameterValue != null ? ', include: $includeParameterValue' : '';
 
-      buffer.writeln('  return (await ${entity.name.pascalCase}.db.find(session $includeParameter)).map((e)=> e.toJson()).toList().reversed;');
+      buffer.writeln(
+        '  return (await ${entity.name.pascalCase}.db.find(session $includeParameter)).map((e)=> e.toJson()).toList().reversed;',
+      );
       buffer.writeln('}\n');
     }
     buffer.writeln("throw Exception('Could not find any resource called \$resource');");
@@ -238,6 +242,15 @@ class AdminUtilsGenerator extends FileGenerator {
     }
     buffer.writeln("throw Exception('Could not find any resource called \$resource');");
     buffer.writeln('}'); // deleteResource() end
+
+    buffer.writeln('Future<int> resourceCount(Session session, String resource) async {'); // resourceCount start
+    for (var entity in classes) {
+      buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}") {');
+      buffer.writeln('  return await ${entity.name.pascalCase}.db.count(session);');
+      buffer.writeln('}\n');
+    }
+    buffer.writeln("throw Exception('Could not find any resource called \$resource to count its rows');");
+    buffer.writeln('}'); // resourceCount end
 
     buffer.writeln('/// Will create a new UuidValue for resource if the id type is uuid. If type of id is int it will return null.');
     buffer.writeln('dynamic newUuidForResource(String resource) {'); // newUuidForResource start
