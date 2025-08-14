@@ -54,7 +54,7 @@ class TableRoute extends WidgetRoute {
     Session session,
     String resource,
   ) async {
-    List<Map<String, dynamic>> rows = await listResources(session, resource);
+    List<Map<String, dynamic>> rows = (await listResources(session, resource)).toList();
 
     final columns = (modelsMap[resource]!['columns'] as List<String>);
 

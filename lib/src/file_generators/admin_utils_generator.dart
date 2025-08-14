@@ -136,13 +136,13 @@ class AdminUtilsGenerator extends FileGenerator {
     buffer.writeln("throw Exception('Could not find any resource called \$resource');");
     buffer.writeln('}'); // findResourceById() end
 
-    buffer.writeln('Future<List<Map<String, dynamic>>> listResources(Session session, String resource) async {'); // listResources() start
+    buffer.writeln('Future<Iterable<Map<String, dynamic>>> listResources(Session session, String resource) async {'); // listResources() start
     for (final entity in classes) {
       buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}"){');
       final includeParameterValue = includeValueForResource(entity, classes);
       final includeParameter = includeParameterValue != null ? ', include: $includeParameterValue' : '';
 
-      buffer.writeln('  return (await ${entity.name.pascalCase}.db.find(session $includeParameter)).map((e)=> e.toJson()).toList();');
+      buffer.writeln('  return (await ${entity.name.pascalCase}.db.find(session $includeParameter)).map((e)=> e.toJson()).toList().reversed;');
       buffer.writeln('}\n');
     }
     buffer.writeln("throw Exception('Could not find any resource called \$resource');");
