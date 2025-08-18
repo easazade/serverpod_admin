@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload File - Serverpod Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
+        }
+
+        body {
+            font-size: 13px;
+            line-height: 1.4;
+            color: #333;
+            background: #f8f8f8;
+        }
+
+        /* Header */
+        .header {
+            background: #ffffff;
+            padding: 8px 16px;
+            border-bottom: 1px solid #dc3545;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0 auto;
+        }
+
+        .header-links {
+            display: flex;
+            gap: 16px;
+        }
+
+        .header-link {
+            color: #000;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .header-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .content-area {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+        }
+
+        /* Upload */
+        .upload-container {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .upload-header {
+            background: #f8f9fa;
+            padding: 16px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .upload-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+
+        .upload-content {
+            padding: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .file-input {
+            display: inline-block;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-box {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            color: #495057;
+            display: none;
+        }
+
+        .success-box {
+            margin-top: 16px;
+            padding: 12px;
+            background: #e6ffed;
+            border: 1px solid #28a745;
+            border-radius: 4px;
+            color: #155724;
+        }
+        .success-box a { color: #155724; word-break: break-all; }
+        .success-box code { background: rgba(21, 87, 36, 0.08); padding: 1px 4px; border-radius: 3px; }
+
+        .loading-spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('uploadForm');
+            const fileInput = document.getElementById('fileInput');
+            const uploadButton = document.getElementById('uploadButton');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const resultBox = document.getElementById('uploadResult');
+            const resultContent = document.getElementById('uploadResultContent');
+            console.log(form.action);
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    alert('Please select a file to upload.');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+
+                // UI state
+                uploadButton.disabled = true;
+                uploadButton.textContent = 'Uploading...';
+                loadingSpinner.style.display = 'inline-block';
+                resultBox.style.display = 'none';
+                resultContent.textContent = '';
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        redirect: 'follow',
+                    });
+
+                    const html = await response.text();
+
+                    if (!response.ok) {
+                        throw new Error('Upload failed with status ' + response.status);
+                    }
+
+                    // Load returned HTML page
+                    document.open();
+                    document.write(html);
+                    document.close();
+                    return;
+                } catch (err) {
+                    alert('Upload failed: ' + err.message);
+                } finally {
+                    uploadButton.disabled = false;
+                    uploadButton.textContent = 'Upload';
+                    loadingSpinner.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <img src="/images/serverpod-admin-logo.png" width="200" style="margin-top: 8px; margin-bottom: 12px;">
+            <div class="header-links">
+                <a href="/admin" class="header-link">VIEW SITE</a>
+                <a href="/admin/upload-file" class="header-link">UPLOAD TO STORAGE</a>
+                <a href="/admin/password_change/" class="header-link">CHANGE PASSWORD</a>
+                <a href="/admin/logout/" class="header-link">LOG OUT</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-area">
+            <!-- Breadcrumb -->
+            <div style="margin-bottom: 20px;">
+                <a href="/admin/" style="color: #007bff; text-decoration: none;">← Back to Admin</a>
+            </div>
+
+            <!-- Upload Container -->
+            <div class="upload-container">
+                <div class="upload-header">
+                    <h1 class="upload-title">Upload File</h1>
+                </div>
+                <div class="upload-content">
+                    <form id="uploadForm" method="POST" action="{{upload_url}}">
+                        <div class="form-row">
+                            <input class="file-input" id="fileInput" type="file" name="file" required>
+                            <button id="uploadButton" type="submit" class="btn btn-primary">
+                                Upload
+                                <div id="loadingSpinner" class="loading-spinner"></div>
+                            </button>
+                            <a href="/admin/" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+
+                    {{#file_uploaded}}
+                    <div class="success-box">
+                        <strong>Upload successful</strong>
+                        <div style="margin-top: 6px;">
+                            {{#file_path}}<div>File path: <code>{{file_path}}</code></div>{{/file_path}}
+                            <div>Public URL: <a href="{{public_url}}" target="_blank" rel="noopener">{{public_url}}</a></div>
+                        </div>
+                    </div>
+                    {{/file_uploaded}}
+
+                    <div id="uploadResult" class="result-box">
+                        <strong>Result:</strong>
+                        <div id="uploadResultContent" style="margin-top: 6px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

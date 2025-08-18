@@ -1,0 +1,15 @@
+import 'package:serverpod/serverpod.dart';
+
+class AdminUploadPage extends Widget {
+  AdminUploadPage({
+    String? filePath,
+    String? publicUrl,
+  }) : super(name: 'upload_page') {
+    values = {
+      "upload_url": "/admin/upload-file",
+      "file_uploaded": filePath != null && publicUrl != null,
+      if (filePath != null) "file_path": filePath,
+      if (publicUrl != null) "public_url": publicUrl,
+    };
+  }
+}

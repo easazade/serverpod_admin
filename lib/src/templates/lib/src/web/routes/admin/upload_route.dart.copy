@@ -1,0 +1,85 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:{{server_package_name}}/src/web/widgets/admin/error_page.dart';
+import 'package:{{server_package_name}}/src/web/widgets/admin/upload_page.dart';
+import 'package:mime/mime.dart';
+import 'package:serverpod/serverpod.dart';
+
+class UploadRoute extends WidgetRoute {
+  @override
+  Future<AbstractWidget> build(Session session, HttpRequest request) async {
+    final method = request.method.toLowerCase();
+    if (method == 'post') {
+      String? publicUrl;
+      String? filePath;
+
+      // Parse multipart/form-data and extract uploaded file bytes and filename
+      final contentType = request.headers.contentType;
+      if (contentType == null || contentType.mimeType != 'multipart/form-data') {
+        return ErrorPage(session: session, error: 'Content-Type must be multipart/form-data');
+      }
+
+      final boundary = contentType.parameters['boundary'];
+      if (boundary == null || boundary.isEmpty) {
+        return ErrorPage(session: session, error: 'Missing multipart boundary');
+      }
+
+      final transformer = MimeMultipartTransformer(boundary);
+      final partsStream = transformer.bind(request);
+
+      await for (final part in partsStream) {
+        final cd = part.headers['content-disposition'];
+        if (cd == null) {
+          // Skip unknown parts
+          await part.drain<void>();
+          continue;
+        }
+
+        // Parse: form-data; name="foo"; filename="bar.png"
+        final parsed = HeaderValue.parse(cd, preserveBackslash: true);
+        // ignore: unused_local_variable
+        final name = parsed.parameters['name'];
+
+        if (parsed.parameters['filename'] case var filename?) {
+          // This is a file field
+          // Choose where to save it (temp here, but you can pick a directory)
+          final regex = RegExp(r'[^\w.\-]'); 
+          var safePath = filename.replaceAll(regex, '_');
+          final hasDuplicateName = await session.storage.fileExists(storageId: 'public', path: safePath);
+
+          if (hasDuplicateName) {
+            safePath = '${DateTime.now().toIso8601String().replaceAll(regex, '_')}_$safePath';
+          }
+
+          try {
+            final bytes = await mimePartToByteData(part);
+
+            await session.storage.storeFile(storageId: 'public', path: safePath, byteData: bytes);
+            final fileSaved = await session.storage.fileExists(storageId: 'public', path: safePath);
+            session.log('file saved status: $fileSaved');
+            final fileUrl = await session.storage.getPublicUrl(storageId: 'public', path: safePath);
+            session.log('file path: $fileUrl');
+            filePath = safePath;
+            publicUrl = fileUrl.toString();
+          } catch (_) {
+            session.log('Could not save file');
+            rethrow;
+          }
+        }
+      }
+      return AdminUploadPage(filePath: filePath, publicUrl: publicUrl);
+    } else {
+      return AdminUploadPage();
+    }
+  }
+}
+
+Future<ByteData> mimePartToByteData(MimeMultipart part) async {
+  final builder = BytesBuilder(copy: false);
+  await for (final chunk in part) {
+    builder.add(chunk);
+  }
+  final Uint8List bytes = builder.takeBytes();
+  return ByteData.sublistView(bytes); // or: bytes.buffer.asByteData()
+}

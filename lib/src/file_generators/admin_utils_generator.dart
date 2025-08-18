@@ -58,6 +58,7 @@ class AdminUtilsGenerator extends FileGenerator {
     buffer.writeln('import "package:$serverPackageName/src/web/routes/admin/admin_route.dart";');
     buffer.writeln('import "package:$serverPackageName/src/web/routes/admin/object_route.dart";');
     buffer.writeln('import "package:$serverPackageName/src/web/routes/admin/table_route.dart";');
+    buffer.writeln('import "package:$serverPackageName/src/web/routes/admin/upload_route.dart";');
     buffer.writeln("import 'package:uuid/v7.dart';"); // import
     buffer.writeln("import 'package:uuid/v4.dart';"); // import
     buffer.writeln("import 'package:serverpod/serverpod.dart';"); // import
@@ -277,6 +278,8 @@ class AdminUtilsGenerator extends FileGenerator {
       pod.webServer.addRoute(ObjectRoute(), '/admin/save/*');
       pod.webServer.addRoute(ObjectRoute(), '/admin/delete/*');
       pod.webServer.addRoute(ObjectRoute(), '/admin/add/*');
+      
+      pod.webServer.addRoute(UploadRoute(), '/admin/upload-file');
     ''');
     buffer.writeln('}'); // appendAdminRoutes() end
 
