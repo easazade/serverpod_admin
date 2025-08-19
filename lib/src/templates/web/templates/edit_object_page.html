@@ -387,6 +387,70 @@
             color: #6c757d;
             margin-bottom: 4px;
         }
+        
+        /* URI combobox styles */
+        .uri-combobox {
+            position: relative;
+        }
+        .uri-combobox .uri-input {
+            padding-right: 96px;
+        }
+        /* Hide confusing native datalist arrow in WebKit/Blink for this input only */
+        .uri-combobox .uri-input::-webkit-calendar-picker-indicator {
+            display: none;
+        }
+        .uri-toggle {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            border: 1px solid #ced4da;
+            background: #f8f9fa;
+            color: #495057;
+            border-radius: 4px;
+            height: 28px;
+            line-height: 26px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0 10px;
+        }
+        .uri-toggle:focus {
+            outline: 0;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .uri-suggestions {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            max-height: 220px;
+            overflow: auto;
+            background: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            display: none;
+            z-index: 20;
+        }
+        .uri-suggestions.open { display: block; }
+        .uri-suggestion-item {
+            padding: 8px 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+        .uri-suggestion-item:hover { background: #f1f3f5; }
+        .uri-suggestion-item.active { background: #e9ecef; }
+        .uri-suggestion-empty {
+            padding: 10px;
+            color: #6c757d;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -527,13 +591,25 @@
                                 {{/UuidValue}}
                                 
                                 {{#Uri}}
-                                    <input type="url" 
-                                           id="field_{{field_name}}" 
-                                           name="{{field_name}}" 
-                                           class="field-input uri-input"
-                                           value="{{field_value}}"
-                                           {{#required}}required{{/required}}
-                                           placeholder="Enter URL (e.g., https://example.com)...">
+                                    <div class="uri-combobox" data-field-name="{{field_name}}">
+                                        <input type="uri" 
+                                               id="field_{{field_name}}" 
+                                               name="{{field_name}}" 
+                                               class="field-input uri-input"
+                                               value="{{field_value}}"
+                                               {{#required}}required{{/required}}
+                                               autocomplete="off"
+                                               placeholder="Enter URL or pick from storage...">
+                                        <button type="button" class="uri-toggle" aria-expanded="false" aria-controls="uri_suggestions_field_{{field_name}}" title="Browse storage">▾</button>
+                                        <div class="uri-suggestions" id="uri_suggestions_field_{{field_name}}">
+                                            {{#storage_files}}
+                                            <div class="uri-suggestion-item" data-value="{{path}}">{{path}}</div>
+                                            {{/storage_files}}
+                                            {{^storage_files}}
+                                            <div class="uri-suggestion-empty">No storage files found.</div>
+                                            {{/storage_files}}
+                                        </div>
+                                    </div>
                                 {{/Uri}}
                                 
                                 {{#BigInt}}
@@ -792,6 +868,104 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Enhance URI inputs with custom suggestions dropdown
+            (function initUriComboboxes(){
+              const combos = document.querySelectorAll('.uri-combobox');
+              combos.forEach(combo => {
+                const input = combo.querySelector('.uri-input');
+                const toggle = combo.querySelector('.uri-toggle');
+                const panel = combo.querySelector('.uri-suggestions');
+                const items = Array.from(panel.querySelectorAll('.uri-suggestion-item'));
+                let isOpen = false;
+                let activeIndex = -1;
+
+                function openPanel(){
+                  if (!panel) return;
+                  panel.classList.add('open');
+                  toggle?.setAttribute('aria-expanded', 'true');
+                  isOpen = true;
+                }
+                function closePanel(){
+                  if (!panel) return;
+                  panel.classList.remove('open');
+                  toggle?.setAttribute('aria-expanded', 'false');
+                  isOpen = false;
+                  setActive(-1);
+                }
+                function setActive(index){
+                  activeIndex = index;
+                  items.forEach((el, i) => {
+                    if (i === index) el.classList.add('active');
+                    else el.classList.remove('active');
+                  });
+                }
+                function applyItem(el){
+                  const value = el?.getAttribute('data-value') || el?.textContent || '';
+                  if (value) {
+                    input.value = value;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                  }
+                  closePanel();
+                  input.focus();
+                }
+                function filterList(){
+                  const q = input.value.toLowerCase();
+                  let visibleCount = 0;
+                  items.forEach(el => {
+                    const v = (el.getAttribute('data-value') || el.textContent || '').toLowerCase();
+                    const show = !q || v.includes(q);
+                    el.style.display = show ? '' : 'none';
+                    if (show) visibleCount++;
+                  });
+                  if (visibleCount === 0) openPanel();
+                }
+
+                toggle?.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  if (isOpen) closePanel(); else openPanel();
+                });
+                input.addEventListener('focus', () => {
+                  if (items.length) openPanel();
+                });
+                input.addEventListener('input', () => {
+                  filterList();
+                  if (items.length) openPanel();
+                });
+                input.addEventListener('keydown', (e) => {
+                  if (!isOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                    openPanel();
+                  }
+                  if (!isOpen) return;
+                  const visibleItems = items.filter(el => el.style.display !== 'none');
+                  const currentIndex = visibleItems.indexOf(visibleItems.find(el => el.classList.contains('active')));
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const next = currentIndex < 0 ? 0 : Math.min(currentIndex + 1, visibleItems.length - 1);
+                    items.forEach(el => el.classList.remove('active'));
+                    if (visibleItems[next]) visibleItems[next].classList.add('active');
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prev = currentIndex <= 0 ? 0 : currentIndex - 1;
+                    items.forEach(el => el.classList.remove('active'));
+                    if (visibleItems[prev]) visibleItems[prev].classList.add('active');
+                  } else if (e.key === 'Enter') {
+                    const activeEl = visibleItems.find(el => el.classList.contains('active')) || visibleItems[0];
+                    if (activeEl) {
+                      e.preventDefault();
+                      applyItem(activeEl);
+                    }
+                  } else if (e.key === 'Escape') {
+                    closePanel();
+                  }
+                });
+                items.forEach(el => {
+                  el.addEventListener('click', () => applyItem(el));
+                });
+                document.addEventListener('click', (evt) => {
+                  if (!combo.contains(evt.target)) closePanel();
+                });
+              });
+            })();
             // 1) Select your form
             const form = document.getElementById('editForm'); 
             if (!form) return;  // nothing to do if it doesn't exist

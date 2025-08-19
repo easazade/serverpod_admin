@@ -6,7 +6,7 @@ import 'package:serverpod/serverpod.dart';
 
 class ViewObjectPage extends Widget {
   String resource;
-  final String id;
+  dynamic id;
   final Map<String, dynamic> object;
 
   ViewObjectPage({
@@ -14,8 +14,9 @@ class ViewObjectPage extends Widget {
     required this.id,
     required this.object,
   }) : super(name: 'view_object_page') {
+    id = id.toString();
     resource = resource.toLowerCase();
-    
+
     final List<Map<String, dynamic>> objectFields = object.entries.where((entry) {
       final fieldName = entry.key;
       final isPrivateField = fieldName.startsWith('_');

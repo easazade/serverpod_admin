@@ -6,11 +6,13 @@ class EditObjectPage extends Widget {
   String resource;
   final String? id;
   final Map<String, dynamic> object;
+  final List<Map<String, dynamic>> storageFiles;
 
   EditObjectPage({
     required this.resource,
     required this.id,
     required this.object,
+    required this.storageFiles,
   }) : super(name: 'edit_object_page') {
     resource = resource.toLowerCase();
     final List<Map<String, dynamic>> objectFields = object.entries.where((entry) {
@@ -98,6 +100,7 @@ class EditObjectPage extends Widget {
       "delete_url": "/admin/delete/$resource/$id",
       "class": resource.pascalCase,
       "object_fields": objectFields,
+      "storage_files": storageFiles,
     };
   }
 }

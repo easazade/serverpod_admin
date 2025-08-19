@@ -41,7 +41,8 @@ class ObjectRoute extends WidgetRoute {
     print('Start to do action($action) on $resource with $id');
 
     if (action == 'add') {
-      return AddObjectPage(resource: resource);
+      final storageFiles = await listResources(session, 'CloudStorageEntry');
+      return AddObjectPage(resource: resource, storageFiles: storageFiles.toList());
     } else if (action == 'delete' && id != null) {
       print('deleting $id redirecting :)');
       await deleteResource(session, resource, id);
@@ -56,11 +57,11 @@ class ObjectRoute extends WidgetRoute {
         if (fieldValue == null || fieldValue == 'null') {
           return MapEntry(fieldName, null);
         } else if (fieldType.startsWith('int')) {
-          return MapEntry(fieldName, int.parse(fieldValue.toString()));
+          return MapEntry(fieldName, int.tryParse(fieldValue.toString()));
         } else if (fieldType.startsWith('double')) {
-          return MapEntry(fieldName, double.parse(fieldValue.toString()));
+          return MapEntry(fieldName, double.tryParse(fieldValue.toString()));
         } else if (fieldType.startsWith('bool')) {
-          return MapEntry(fieldName, bool.parse(fieldValue.toString()));
+          return MapEntry(fieldName, bool.tryParse(fieldValue.toString()));
         }
 
         return MapEntry(fieldName, fieldValue);
@@ -86,7 +87,8 @@ class ObjectRoute extends WidgetRoute {
       if (action == 'view') {
         return ViewObjectPage(resource: resource, id: id, object: object);
       } else if (action == 'edit') {
-        return EditObjectPage(resource: resource, id: id, object: object);
+        final storageFiles = await listResources(session, 'CloudStorageEntry');
+        return EditObjectPage(resource: resource, id: id, object: object, storageFiles: storageFiles.toList());
       } else {
         return ErrorPage(session: session, error: 'Only allowed actions are $allowedActions');
       }

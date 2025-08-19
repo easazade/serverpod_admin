@@ -4,8 +4,12 @@ import 'package:serverpod/serverpod.dart';
 
 class AddObjectPage extends Widget {
   String resource;
+  final List<Map<String, dynamic>> storageFiles;
 
-  AddObjectPage({required this.resource}) : super(name: 'add_object_page') {
+  AddObjectPage({
+    required this.resource,
+    required this.storageFiles,
+  }) : super(name: 'add_object_page') {
     resource = resource.toLowerCase();
     // Generate object fields similar to ViewObjectPage
     print('resource: $resource');
@@ -76,6 +80,7 @@ class AddObjectPage extends Widget {
       "class": resource.pascalCase,
       "resource": resource,
       "object_fields": objectFields,
+      "storage_files": storageFiles,
     };
   }
 }
