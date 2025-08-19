@@ -17,6 +17,14 @@ class ViewObjectPage extends Widget {
     id = id.toString();
     resource = resource.toLowerCase();
 
+    // add missing nullable field names to the json object
+    final columns = modelsMap[resource]['columns'] as List<String>;
+    for (var column in columns) {
+      if (!object.containsKey(column)) {
+        object[column] = null;
+      }
+    }
+
     final List<Map<String, dynamic>> objectFields = object.entries.where((entry) {
       final fieldName = entry.key;
       final isPrivateField = fieldName.startsWith('_');

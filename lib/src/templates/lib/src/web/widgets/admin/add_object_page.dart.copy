@@ -55,6 +55,7 @@ class AddObjectPage extends Widget {
         'is_list_double': json['field_type'].toString().startsWith('List<double>'),
         'is_list_num': json['field_type'].toString().startsWith('List<num>'),
         'is_list_bool': json['field_type'].toString().startsWith('List<bool>'),
+        'is_list_uri': json['field_type'].toString().startsWith('List<Uri>'),
 
         // set
         'is_set_string': json['field_type'].toString().startsWith('Set<String>'),
@@ -62,6 +63,7 @@ class AddObjectPage extends Widget {
         'is_set_double': json['field_type'].toString().startsWith('Set<double>'),
         'is_set_num': json['field_type'].toString().startsWith('Set<num>'),
         'is_set_bool': json['field_type'].toString().startsWith('Set<bool>'),
+        'is_set_uri': json['field_type'].toString().startsWith('Set<Uri>'),
 
         // map
         'is_map_string_string': json['field_type'].toString().startsWith('Map<String, String>'),
@@ -69,6 +71,7 @@ class AddObjectPage extends Widget {
         'is_map_string_double': json['field_type'].toString().startsWith('Map<String, double>'),
         'is_map_string_num': json['field_type'].toString().startsWith('Map<String, num>'),
         'is_map_string_bool': json['field_type'].toString().startsWith('Map<String, bool>'),
+        'is_map_string_uri': json['field_type'].toString().startsWith('Map<String, Uri>'),
       });
 
       return json;

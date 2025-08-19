@@ -634,7 +634,7 @@
                                     
                                 {{#is_list}}
                                 <div class="collection-container" id="collection_{{field_name}}">
-                                    <div class="collection-label">List Items ({{field_type}}):</div>
+                                    <div class="collection-label">List Items ({{& field_type}}):</div>
                                     <div class="collection-items" id="list_items_{{field_name}}">
                                         {{#list_items}}
 
@@ -647,6 +647,26 @@
                                                    placeholder="Enter text..."
                                                    {{#required}}required{{/required}}>
                                             {{/is_list_string}}
+                                            {{#is_list_uri}}
+                                            <div class="uri-combobox" data-field-name="{{field_name}}">
+                                                <input type="uri" 
+                                                        name="{{field_name}}" 
+                                                        class="collection-input-field list-field-input uri-input"
+                                                        value="{{list_item}}"
+                                                        {{#required}}required{{/required}}
+                                                        autocomplete="off"
+                                                        placeholder="Enter a URI or pick from storage...">
+                                                <button type="button" class="uri-toggle" aria-expanded="false" aria-controls="uri_suggestions_field_{{field_name}}_{{list_item_index}}" title="Browse storage">▾</button>
+                                                <div class="uri-suggestions" id="uri_suggestions_field_{{field_name}}_{{list_item_index}}">
+                                                    {{#storage_files}}
+                                                    <div class="uri-suggestion-item" data-value="{{path}}">{{path}}</div>
+                                                    {{/storage_files}}
+                                                    {{^storage_files}}
+                                                    <div class="uri-suggestion-empty">No storage files found.</div>
+                                                    {{/storage_files}}
+                                                </div>
+                                            </div>
+                                            {{/is_list_uri}}
                                             {{#is_list_int}}
                                             <input type="number" 
                                                    class="collection-input-field list-field-input number-input" 
@@ -687,13 +707,13 @@
                                         </div>
                                         {{/list_items}}
                                     </div>
-                                    <button type="button" class="collection-add-btn" onclick="addListItem('{{field_name}}', '{{field_type}}')">Add Item</button>
+                                    <button type="button" class="collection-add-btn" onclick="addListItem('{{field_name}}', '{{& field_type}}')">Add Item</button>
                                 </div>
                                 {{/is_list}}
 
                                 {{#is_set}}
                                 <div class="collection-container" id="collection_{{field_name}}">
-                                    <div class="collection-label">Set Items ({{field_type}}):</div>
+                                    <div class="collection-label">Set Items ({{& field_type}}):</div>
                                     <div class="collection-items" id="set_items_{{field_name}}">
                                         {{#list_items}}
                                         <div class="collection-item">
@@ -705,6 +725,26 @@
                                                    placeholder="Enter text..."
                                                    {{#required}}required{{/required}}>
                                             {{/is_set_string}}
+                                            {{#is_set_uri}}
+                                            <div class="uri-combobox" data-field-name="{{field_name}}">
+                                                <input type="uri" 
+                                                       name="{{field_name}}" 
+                                                       class="collection-input-field set-field-input uri-input"
+                                                       value="{{list_item}}"
+                                                       {{#required}}required{{/required}}
+                                                       autocomplete="off"
+                                                       placeholder="Enter a URI or pick from storage...">
+                                                <button type="button" class="uri-toggle" aria-expanded="false" aria-controls="uri_suggestions_field_{{field_name}}_{{list_item_index}}" title="Browse storage">▾</button>
+                                                <div class="uri-suggestions" id="uri_suggestions_field_{{field_name}}_{{list_item_index}}">
+                                                    {{#storage_files}}
+                                                    <div class="uri-suggestion-item" data-value="{{path}}">{{path}}</div>
+                                                    {{/storage_files}}
+                                                    {{^storage_files}}
+                                                    <div class="uri-suggestion-empty">No storage files found.</div>
+                                                    {{/storage_files}}
+                                                </div>
+                                            </div>
+                                            {{/is_set_uri}}
                                             {{#is_set_int}}
                                             <input type="number" 
                                                    class="collection-input-field set-field-input number-input" 
@@ -745,14 +785,14 @@
                                         </div>
                                         {{/list_items}}
                                     </div>
-                                    <button type="button" class="collection-add-btn" onclick="addSetItem('{{field_name}}', '{{field_type}}')">Add Item</button>
+                                    <button type="button" class="collection-add-btn" onclick="addSetItem('{{field_name}}', '{{& field_type}}')">Add Item</button>
                                 </div>
                                 {{/is_set}}
 
                                 
                                 {{#is_map}}
                                 <div class="collection-container" id="collection_{{field_name}}">
-                                    <div class="collection-label">Map Items ({{field_type}}):</div>
+                                    <div class="collection-label">Map Items ({{& field_type}}):</div>
                                     <div class="collection-items" id="map_items_{{field_name}}">
                                         {{#field_value}}
                                         {{#map_entries}}
@@ -807,19 +847,39 @@
                                                 <option value="false" {{^value}}selected{{/value}}>false</option>
                                             </select>
                                             {{/is_map_string_bool}}
+                                            {{#is_map_string_uri}}
+                                            <div class="uri-combobox" data-field-name="{{field_name}}_value">
+                                                <input type="uri" 
+                                                       class="map-value-field map-field-input uri-input" 
+                                                       name="{{field_name}}_value" 
+                                                       value="{{value}}"
+                                                       {{#required}}required{{/required}}
+                                                       autocomplete="off"
+                                                       placeholder="Enter a URI or pick from storage...">
+                                                <button type="button" class="uri-toggle" aria-expanded="false" aria-controls="uri_suggestions_field_{{field_name}}_{{key}}" title="Browse storage">▾</button>
+                                                <div class="uri-suggestions" id="uri_suggestions_field_{{field_name}}_{{key}}">
+                                                    {{#storage_files}}
+                                                    <div class="uri-suggestion-item" data-value="{{path}}">{{path}}</div>
+                                                    {{/storage_files}}
+                                                    {{^storage_files}}
+                                                    <div class="uri-suggestion-empty">No storage files found.</div>
+                                                    {{/storage_files}}
+                                                </div>
+                                            </div>
+                                            {{/is_map_string_uri}}
                                             <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
                                         </div>
                                         {{/map_entries}}
                                         {{/field_value}}
                                     </div>
-                                    <button type="button" class="collection-add-btn" onclick="addMapItem('{{field_name}}', '{{field_type}}')">Add Key-Value Pair</button>
+                                    <button type="button" class="collection-add-btn" onclick="addMapItem('{{field_name}}', '{{& field_type}}')">Add Key-Value Pair</button>
                                 </div>
                                 {{/is_map}}
 
                                 
                             {{/field_type}}
                             
-                            <div class="field-type">{{field_type}}</div>
+                            <div class="field-type">{{& field_type}}</div>
                             {{#error}}
                                 <div class="field-error">{{error}}</div>
                             {{/error}}
@@ -867,105 +927,113 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Enhance URI inputs with custom suggestions dropdown
-            (function initUriComboboxes(){
-              const combos = document.querySelectorAll('.uri-combobox');
-              combos.forEach(combo => {
+        function initUriComboboxes(root = document) {
+            const combos = root.querySelectorAll('.uri-combobox');
+            combos.forEach(combo => {
+                if (combo.dataset.initialized === 'true') return;
                 const input = combo.querySelector('.uri-input');
                 const toggle = combo.querySelector('.uri-toggle');
                 const panel = combo.querySelector('.uri-suggestions');
-                const items = Array.from(panel.querySelectorAll('.uri-suggestion-item'));
                 let isOpen = false;
-                let activeIndex = -1;
 
+                function getItems() {
+                    return Array.from(panel?.querySelectorAll('.uri-suggestion-item') || []);
+                }
                 function openPanel(){
-                  if (!panel) return;
-                  panel.classList.add('open');
-                  toggle?.setAttribute('aria-expanded', 'true');
-                  isOpen = true;
+                    if (!panel) return;
+                    panel.classList.add('open');
+                    toggle?.setAttribute('aria-expanded', 'true');
+                    isOpen = true;
                 }
                 function closePanel(){
-                  if (!panel) return;
-                  panel.classList.remove('open');
-                  toggle?.setAttribute('aria-expanded', 'false');
-                  isOpen = false;
-                  setActive(-1);
+                    if (!panel) return;
+                    panel.classList.remove('open');
+                    toggle?.setAttribute('aria-expanded', 'false');
+                    isOpen = false;
+                    setActive(-1);
                 }
                 function setActive(index){
-                  activeIndex = index;
-                  items.forEach((el, i) => {
-                    if (i === index) el.classList.add('active');
-                    else el.classList.remove('active');
-                  });
+                    const items = getItems();
+                    items.forEach((el, i) => {
+                        if (i === index) el.classList.add('active');
+                        else el.classList.remove('active');
+                    });
                 }
                 function applyItem(el){
-                  const value = el?.getAttribute('data-value') || el?.textContent || '';
-                  if (value) {
-                    input.value = value;
-                    input.dispatchEvent(new Event('input', { bubbles: true }));
-                  }
-                  closePanel();
-                  input.focus();
+                    const value = el?.getAttribute('data-value') || el?.textContent || '';
+                    if (value && input) {
+                        input.value = value;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    closePanel();
+                    input?.focus();
                 }
                 function filterList(){
-                  const q = input.value.toLowerCase();
-                  let visibleCount = 0;
-                  items.forEach(el => {
-                    const v = (el.getAttribute('data-value') || el.textContent || '').toLowerCase();
-                    const show = !q || v.includes(q);
-                    el.style.display = show ? '' : 'none';
-                    if (show) visibleCount++;
-                  });
-                  if (visibleCount === 0) openPanel();
+                    const items = getItems();
+                    const q = (input?.value || '').toLowerCase();
+                    let visibleCount = 0;
+                    items.forEach(el => {
+                        const v = (el.getAttribute('data-value') || el.textContent || '').toLowerCase();
+                        const show = !q || v.includes(q);
+                        el.style.display = show ? '' : 'none';
+                        if (show) visibleCount++;
+                    });
+                    if (visibleCount === 0) openPanel();
                 }
 
                 toggle?.addEventListener('click', (e) => {
-                  e.preventDefault();
-                  if (isOpen) closePanel(); else openPanel();
-                });
-                input.addEventListener('focus', () => {
-                  if (items.length) openPanel();
-                });
-                input.addEventListener('input', () => {
-                  filterList();
-                  if (items.length) openPanel();
-                });
-                input.addEventListener('keydown', (e) => {
-                  if (!isOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-                    openPanel();
-                  }
-                  if (!isOpen) return;
-                  const visibleItems = items.filter(el => el.style.display !== 'none');
-                  const currentIndex = visibleItems.indexOf(visibleItems.find(el => el.classList.contains('active')));
-                  if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    const next = currentIndex < 0 ? 0 : Math.min(currentIndex + 1, visibleItems.length - 1);
-                    items.forEach(el => el.classList.remove('active'));
-                    if (visibleItems[next]) visibleItems[next].classList.add('active');
-                  } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    const prev = currentIndex <= 0 ? 0 : currentIndex - 1;
-                    items.forEach(el => el.classList.remove('active'));
-                    if (visibleItems[prev]) visibleItems[prev].classList.add('active');
-                  } else if (e.key === 'Enter') {
-                    const activeEl = visibleItems.find(el => el.classList.contains('active')) || visibleItems[0];
-                    if (activeEl) {
-                      e.preventDefault();
-                      applyItem(activeEl);
+                    if (isOpen) closePanel(); else openPanel();
+                });
+                input?.addEventListener('focus', () => {
+                    if (getItems().length) openPanel();
+                });
+                input?.addEventListener('input', () => {
+                    filterList();
+                    if (getItems().length) openPanel();
+                });
+                input?.addEventListener('keydown', (e) => {
+                    if (!isOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                        openPanel();
                     }
-                  } else if (e.key === 'Escape') {
-                    closePanel();
-                  }
+                    if (!isOpen) return;
+                    const items = getItems().filter(el => el.style.display !== 'none');
+                    const currentIndex = items.indexOf(items.find(el => el.classList.contains('active')));
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const next = currentIndex < 0 ? 0 : Math.min(currentIndex + 1, items.length - 1);
+                        getItems().forEach(el => el.classList.remove('active'));
+                        if (items[next]) items[next].classList.add('active');
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const prev = currentIndex <= 0 ? 0 : currentIndex - 1;
+                        getItems().forEach(el => el.classList.remove('active'));
+                        if (items[prev]) items[prev].classList.add('active');
+                    } else if (e.key === 'Enter') {
+                        const activeEl = items.find(el => el.classList.contains('active')) || items[0];
+                        if (activeEl) {
+                            e.preventDefault();
+                            applyItem(activeEl);
+                        }
+                    } else if (e.key === 'Escape') {
+                        closePanel();
+                    }
                 });
-                items.forEach(el => {
-                  el.addEventListener('click', () => applyItem(el));
+                panel?.addEventListener('click', (e) => {
+                    const target = e.target.closest('.uri-suggestion-item');
+                    if (target) applyItem(target);
                 });
                 document.addEventListener('click', (evt) => {
-                  if (!combo.contains(evt.target)) closePanel();
+                    if (!combo.contains(evt.target)) closePanel();
                 });
-              });
-            })();
+
+                combo.dataset.initialized = 'true';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Enhance URI inputs with custom suggestions dropdown
+            initUriComboboxes();
             // 1) Select your form
             const form = document.getElementById('editForm'); 
             if (!form) return;  // nothing to do if it doesn't exist
@@ -1263,13 +1331,12 @@
 
         // Collection management functions
         function addListItem(fieldName, fieldType) {
-            console.log(fieldType);
             const container = document.getElementById(`list_items_${fieldName}`);
             const newItem = document.createElement('div');
             newItem.className = 'collection-item';
             
             let inputHtml = '';
-            const isRequired = document.querySelector(`[name="${fieldName}"]`).hasAttribute('required');
+            const isRequired = document.querySelector(`[name="${fieldName}"]`)?.hasAttribute('required') ?? false;
             
             if (fieldType === 'List<String>') {
                 inputHtml = `<input type="text" 
@@ -1306,6 +1373,25 @@
                                 <option value="true">true</option>
                                 <option value="false">false</option>
                             </select>`;
+            } else if(fieldType === 'List<Uri>'){
+                let ariaIdExtension = randomString();
+                inputHtml = `<div class="uri-combobox" data-field-name="${fieldName}">
+                                <input type="uri" 
+                                        name="${fieldName}"
+                                        class="collection-input-field list-field-input uri-input"
+                                        ${isRequired ? 'required' : ''}
+                                        autocomplete="off"
+                                        placeholder="Enter a URI or pick from storage...">
+                                <button type="button" class="uri-toggle" aria-expanded="false" aria-controls="uri_suggestions_field_${fieldName}_${ariaIdExtension}" title="Browse storage">▾</button>
+                                <div class="uri-suggestions" id="uri_suggestions_field_${fieldName}_${ariaIdExtension}">
+                                    {{#storage_files}}
+                                    <div class="uri-suggestion-item" data-value="{{path}}">{{path}}</div>
+                                    {{/storage_files}}
+                                    {{^storage_files}}
+                                    <div class="uri-suggestion-empty">No storage files found.</div>
+                                    {{/storage_files}}
+                                </div>
+                            </div>`;
             } else {
                 // Default to text input
                 inputHtml = `<input type="text" 
@@ -1320,6 +1406,8 @@
                 <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
             `;
             container.appendChild(newItem);
+            // Initialize URI combobox behavior for any newly added inputs
+            try { initUriComboboxes(newItem); } catch (_) {}
         }
 
         function addSetItem(fieldName, fieldType) {
@@ -1329,7 +1417,7 @@
             newItem.className = 'collection-item';
             
             let inputHtml = '';
-            const isRequired = document.querySelector(`[name="${fieldName}"]`).hasAttribute('required');
+            const isRequired = document.querySelector(`[name="${fieldName}"]`)?.hasAttribute('required') ?? false;
             
             if (fieldType === 'Set<String>') {
                 inputHtml = `<input type="text" 
@@ -1366,6 +1454,25 @@
                                 <option value="true">true</option>
                                 <option value="false">false</option>
                             </select>`;
+            } else if (fieldType === 'Set<Uri>') {
+                const ariaIdExtension = randomString();
+                inputHtml = `<div class="uri-combobox" data-field-name="${fieldName}">
+                                <input type="uri" 
+                                       name="${fieldName}"
+                                       class="collection-input-field set-field-input uri-input"
+                                       ${isRequired ? 'required' : ''}
+                                       autocomplete="off"
+                                       placeholder="Enter a URI or pick from storage...">
+                                <button type="button" class="uri-toggle" aria-expanded="false" aria-controls="uri_suggestions_field_${fieldName}_${ariaIdExtension}" title="Browse storage">▾</button>
+                                <div class="uri-suggestions" id="uri_suggestions_field_${fieldName}_${ariaIdExtension}">
+                                    {{#storage_files}}
+                                    <div class="uri-suggestion-item" data-value="{{path}}">{{path}}</div>
+                                    {{/storage_files}}
+                                    {{^storage_files}}
+                                    <div class="uri-suggestion-empty">No storage files found.</div>
+                                    {{/storage_files}}
+                                </div>
+                            </div>`;
             } else {
                 // Default to text input
                 inputHtml = `<input type="text" 
@@ -1380,6 +1487,7 @@
                 <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
             `;
             container.appendChild(newItem);
+            try { initUriComboboxes(newItem); } catch (_) {}
         }
 
         function addMapItem(fieldName, fieldType) {
@@ -1389,7 +1497,7 @@
             newItem.className = 'map-item';
             
             let valueInputHtml = '';
-            const isRequired = document.querySelector(`[name="${fieldName}_value"]`).hasAttribute('required');
+            const isRequired = document.querySelector(`[name="${fieldName}_value"]`)?.hasAttribute('required') ?? false;
             
             if (fieldType === 'Map<String, String>') {
                 valueInputHtml = `<input type="text" 
@@ -1426,6 +1534,25 @@
                                       <option value="true">true</option>
                                       <option value="false">false</option>
                                   </select>`;
+            } else if (fieldType === 'Map<String, Uri>') {
+                const ariaIdExtension = randomString();
+                valueInputHtml = `<div class="uri-combobox" data-field-name="${fieldName}_value">
+                                      <input type="uri" 
+                                             class="map-value-field map-field-input uri-input" 
+                                             name="${fieldName}_value" 
+                                             ${isRequired ? 'required' : ''}
+                                             autocomplete="off"
+                                             placeholder="Enter a URI or pick from storage...">
+                                      <button type="button" class="uri-toggle" aria-expanded="false" aria-controls="uri_suggestions_field_${fieldName}_${ariaIdExtension}" title="Browse storage">▾</button>
+                                      <div class="uri-suggestions" id="uri_suggestions_field_${fieldName}_${ariaIdExtension}">
+                                          {{#storage_files}}
+                                          <div class="uri-suggestion-item" data-value="{{path}}">{{path}}</div>
+                                          {{/storage_files}}
+                                          {{^storage_files}}
+                                          <div class="uri-suggestion-empty">No storage files found.</div>
+                                          {{/storage_files}}
+                                      </div>
+                                  </div>`;
             } else {
                 // Default to text input
                 valueInputHtml = `<input type="text" 
@@ -1440,11 +1567,12 @@
                        class="map-key-field map-field-input" 
                        name="${fieldName}_key" 
                        placeholder="Enter key..."
-                       ${document.querySelector(`[name="${fieldName}_key"]`).hasAttribute('required') ? 'required' : ''}>
+                       ${document.querySelector(`[name="${fieldName}_key"]`)?.hasAttribute('required') ? 'required' : ''}>
                 ${valueInputHtml}
                 <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
             `;
             container.appendChild(newItem);
+            try { initUriComboboxes(newItem); } catch (_) {}
         }
 
         function removeCollectionItem(button) {
@@ -1497,6 +1625,11 @@
                 }
             });
         });
+
+        function randomString(length = 20) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        }
     </script>
 </body>
 </html>

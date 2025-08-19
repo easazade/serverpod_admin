@@ -1,10 +1,14 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
 import 'package:recase/recase.dart';
 import 'package:serverpod/serverpod.dart';
+import 'package:collection/collection.dart';
+
 
 class EditObjectPage extends Widget {
   String resource;
-  final String? id;
+  String? id;
   final Map<String, dynamic> object;
   final List<Map<String, dynamic>> storageFiles;
 
@@ -14,7 +18,17 @@ class EditObjectPage extends Widget {
     required this.object,
     required this.storageFiles,
   }) : super(name: 'edit_object_page') {
+    id = id.toString();
     resource = resource.toLowerCase();
+
+    // add missing nullable field names to the json object
+    final columns = modelsMap[resource]['columns'] as List<String>;
+    for (var column in columns) {
+      if (!object.containsKey(column)) {
+        object[column] = null;
+      }
+    }
+
     final List<Map<String, dynamic>> objectFields = object.entries.where((entry) {
       final fieldName = entry.key;
       final isPrivateField = fieldName.startsWith('_');
@@ -60,6 +74,7 @@ class EditObjectPage extends Widget {
         'is_list_double': json['field_type'].toString().startsWith('List<double>'),
         'is_list_num': json['field_type'].toString().startsWith('List<num>'),
         'is_list_bool': json['field_type'].toString().startsWith('List<bool>'),
+        'is_list_uri': json['field_type'].toString().startsWith('List<Uri>'),
 
         // set
         'is_set_string': json['field_type'].toString().startsWith('Set<String>'),
@@ -67,6 +82,7 @@ class EditObjectPage extends Widget {
         'is_set_double': json['field_type'].toString().startsWith('Set<double>'),
         'is_set_num': json['field_type'].toString().startsWith('Set<num>'),
         'is_set_bool': json['field_type'].toString().startsWith('Set<bool>'),
+        'is_set_uri': json['field_type'].toString().startsWith('Set<Uri>'),
 
         // map
         'is_map_string_string': json['field_type'].toString().startsWith('Map<String, String>'),
@@ -74,9 +90,10 @@ class EditObjectPage extends Widget {
         'is_map_string_double': json['field_type'].toString().startsWith('Map<String, double>'),
         'is_map_string_num': json['field_type'].toString().startsWith('Map<String, num>'),
         'is_map_string_bool': json['field_type'].toString().startsWith('Map<String, bool>'),
+        'is_map_string_uri': json['field_type'].toString().startsWith('Map<String, Uri>'),
 
-        // since mustache cannot iterate maps like it does for lists a simplified list of map entries is added.
-        'map_entries': json['field_type'].toString().startsWith('Map')
+        // since mustache cannot iterate maps like it does for lists, a simplified list of map entries is added.
+        'map_entries': json['field_type'].toString().startsWith('Map') && json['field_value'] != null
             ? (json['field_value'] as Map<String, dynamic>).entries.map((entry) {
                 return <String, dynamic>{'key': entry.key, 'value': entry.value};
               }).toList()
@@ -84,8 +101,12 @@ class EditObjectPage extends Widget {
 
         // for mustache simple processing of lists, sets
         'list_items':
-            json['field_type'].toString().startsWith('List') || json['field_type'].toString().startsWith('Set')
-                ? (json['field_value'] as List).map((e) => {'list_item': e})
+            (json['field_type'].toString().startsWith('List') || json['field_type'].toString().startsWith('Set')) &&
+                    json['field_value'] != null
+                ? (json['field_value'] as List).mapIndexed((index, item) => {
+                      'list_item': item,
+                      'list_item_index': index,
+                    })
                 : null,
       });
 
