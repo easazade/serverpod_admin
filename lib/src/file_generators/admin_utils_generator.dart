@@ -165,6 +165,52 @@ class AdminUtilsGenerator extends FileGenerator {
     buffer.writeln('  id = UuidValue.fromString(id);');
     buffer.writeln('}');
 
+    buffer.writeln('''
+  // Pre-process related fields to support id-only payloads
+  final Map<String, dynamic> relatedFieldsMap =
+      (modelsMap[resource.toLowerCase()]['related_fields'] as Map<String, dynamic>);
+  // Keep ids for list relations to attach after row is saved
+  final Map<String, List<dynamic>> relatedListIds = {};
+
+  for (final entry in relatedFieldsMap.entries) {
+    final fieldName = entry.key;
+    final type = entry.value.toString();
+    final isList = type.trim().startsWith('List<');
+    final dynamic fieldValue = json[fieldName];
+
+    if (isList) {
+      if (fieldValue is List) {
+        final ids = fieldValue.whereType<Map>().map((m) => m['id']).where((v) => v != null).toList();
+        if (ids.isNotEmpty) {
+          relatedListIds[fieldName] = ids;
+          // prevent fromJson from requiring full objects
+          json[fieldName] = null;
+        }
+      } else if (fieldValue == null) {
+        // Explicitly send empty to indicate clearing the relation list
+        relatedListIds[fieldName] = <dynamic>[];
+        json[fieldName] = null;
+      }
+    } else {
+      final foreignKeyName = '\${fieldName}Id';
+      if (fieldValue is Map && fieldValue['id'] != null) {
+        final schema = (modelsMap[resource.toLowerCase()]['schema'] as Map<String, dynamic>);
+        if (schema.containsKey(foreignKeyName)) {
+          json[foreignKeyName] = fieldValue['id'].toString();
+          // prevent fromJson from requiring full object
+          json[fieldName] = null;
+        }
+      } else if (fieldValue == null) {
+        // Null selection for single relation -> clear FK if present in schema
+        final schema = (modelsMap[resource.toLowerCase()]['schema'] as Map<String, dynamic>);
+        if (schema.containsKey(foreignKeyName)) {
+          json[foreignKeyName] = null;
+        }
+      }
+    }
+  }
+''');
+
     for (final entity in classes) {
       buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}"){');
       buffer.writeln('  if(json["id"] == null) {');
@@ -191,30 +237,62 @@ class AdminUtilsGenerator extends FileGenerator {
           final nonNullableType = relatedField.type.replaceAll('?', '');
           if (relatedField.type.startsWith('List')) {
             final extractedTypeName = nonNullableType.substring(5, nonNullableType.length - 1);
-            buffer.writeln('    // insert or update all objects inside the list');
-            buffer.writeln('final updated${relatedField.name.pascalCase} = (await Future.wait(');
-            buffer.writeln('  row.${relatedField.name}?.map((e) {');
-            buffer.writeln('final ${extractedTypeName.camelCase}Json = e.toJson();');
-            buffer.writeln('final id = ${extractedTypeName.camelCase}Json["id"];');
-            buffer.writeln(
-              'return insertOrUpdateResource(session, "${extractedTypeName.toLowerCase()}", ${extractedTypeName.camelCase}Json, id.toString());',
-            );
-            buffer.writeln('}) ?? <Future<Map<String, dynamic>>>[])).map((e) => $extractedTypeName.fromJson(e)).toList();');
+            buffer.writeln('''
+              // insert or update all objects inside the list
 
-            buffer.writeln('    // attach relation between one(${entity.name}) to many(${relatedField.name}: ${relatedField.type})');
-            buffer.writeln(
-              'await ${entity.name}.db.attach.${relatedField.name}(session, updatedRow, updated${relatedField.name.pascalCase});',
-            );
+              final updated${relatedField.name.pascalCase} = (await Future.wait(
+                row.${relatedField.name}?.map((e) {
+                  final ${extractedTypeName.camelCase}Json = e.toJson();
+                  final id = ${extractedTypeName.camelCase}Json["id"];
+                  return insertOrUpdateResource(session, "${extractedTypeName.toLowerCase()}", ${extractedTypeName.camelCase}Json, id.toString());
+              }) ?? <Future<Map<String, dynamic>>>[])).map((e) => $extractedTypeName.fromJson(e)).toList();
+
+              // if there is any, detach old relations between one(${entity.name}) to many(${relatedField.name}: ${relatedField.type})
+              final current = await ${entity.name}.db.findById(session, updatedRow.id!, include: ${includeValueForResource(entity, classes)},);
+              if(current?.${relatedField.name} case var ${relatedField.name}?){
+                await ${entity.name}.db.detach.${relatedField.name}(session, ${relatedField.name});
+              }
+
+              // attach a new relation between one(${entity.name}) to many(${relatedField.name}: ${relatedField.type})
+              await ${entity.name}.db.attach.${relatedField.name}(session, updatedRow, updated${relatedField.name.pascalCase});
+            ''');
           } else {
-            buffer.writeln(
-              'final updated = await insertOrUpdateResource(session, "$nonNullableType", row.${relatedField.name}!.toJson(), row.${relatedField.name}!.id.toString());',
-            );
+            buffer.writeln('''
+              final updated = await insertOrUpdateResource(session, "$nonNullableType", row.${relatedField.name}!.toJson(), row.${relatedField.name}!.id.toString());
+              await ${entity.name}.db.attachRow.${relatedField.name}(session, updatedRow, $nonNullableType.fromJson(updated));
 
-            buffer.writeln(
-              'await ${entity.name}.db.attachRow.${relatedField.name}(session, updatedRow, $nonNullableType.fromJson(updated));',
-            );
+            ''');
           }
-          buffer.writeln('}');
+          if (relatedField.type.startsWith('List')) {
+            buffer.writeln('''
+            } else if(relatedListIds['${relatedField.name}'] != null){
+              final ids = relatedListIds['${relatedField.name}'] ?? [];
+
+              // Detach all existing relations first
+              final current = await ${entity.name}.db.findById(session, updatedRow.id!, include: ${includeValueForResource(entity, classes)},);
+
+              if(current?.${relatedField.name} case var ${relatedField.name}?){
+                await ${entity.name}.db.detach.${relatedField.name}(session, ${relatedField.name});
+              }
+
+              if(ids.isNotEmpty){
+                final $nonNullableType updated${relatedField.name.pascalCase} = [];
+
+                for (var id in ids) {
+                  id = id.toString();
+                  final relatedObject = await findResourceById(session, '${relatedField.relation?.relatedResourceType?.toLowerCase()}', id);
+                  if (relatedObject != null) {
+                    updated${relatedField.name.pascalCase}.add(${relatedField.relation?.relatedResourceType?.pascalCase}.fromJson(relatedObject));
+                  }
+                }
+
+                await Person.db.attach.simples(session, updatedRow, updated${relatedField.name.pascalCase});
+              }
+            }
+          ''');
+          } else {
+            buffer.writeln('}');
+          }
         }
       }
 

@@ -59,7 +59,20 @@ class ParsedField {
       if (part.isEmpty) continue;
       meta.add(part);
       if (part.startsWith('relation')) {
-        relation = Relation.parse(part);
+        print(part);
+
+        final regex = RegExp(
+          r'(?:List|Set)<\s*([^>]+?)\s*>\s*\??|\bMap<\s*String\s*,\s*([^>]+?)\s*>\s*\??|^\s*([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\??)\s*$',
+        );
+
+        final match = regex.firstMatch(rawType);
+        final captured = (match?.group(1) ?? match?.group(2) ?? match?.group(3))?.trim();
+        String? relatedObjectType;
+        if (captured != null && !captured.startsWith('int') && !captured.startsWith('UuidValue')) {
+          relatedObjectType = captured;
+        }
+
+        relation = Relation.parse(raw: part, relatedResourceType: relatedObjectType);
       }
     }
 

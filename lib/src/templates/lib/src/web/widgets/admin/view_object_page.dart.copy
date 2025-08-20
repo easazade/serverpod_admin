@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
 import 'package:recase/recase.dart';
 import 'package:serverpod/serverpod.dart';
-import 'dart:convert';
 
 class ViewObjectPage extends Widget {
   String resource;

@@ -4,18 +4,19 @@ class Relation {
   final String? field;
   final String? parent;
   final bool isOptional;
+  final String? relatedResourceType;
 
-  Relation({this.name, this.field, this.parent, required this.isOptional});
+  Relation({this.name, this.field, this.parent, required this.isOptional, this.relatedResourceType});
 
   @override
   String toString() {
-    return 'Relation(name: $name, field: $field, parent: $parent, isOptional: $isOptional)';
+    return 'Relation(name: $name, field: $field, parent: $parent, isOptional: $isOptional, relatedResourceType: $relatedResourceType)';
   }
 
   /// Parses a raw meta string starting with 'relation', e.g.
   /// 'relation', 'relation(optional)',
   /// 'relation(name=..., field=...)', etc.
-  static Relation parse(String raw) {
+  static Relation parse({required String raw, String? relatedResourceType}) {
     raw = raw.trim();
     String? name;
     String? field;
@@ -53,7 +54,8 @@ class Relation {
         }
       }
     }
+
     // If no parentheses and raw == 'relation', leave all fields null and isOptional false
-    return Relation(name: name, field: field, parent: parent, isOptional: isOptional);
+    return Relation(name: name, field: field, parent: parent, isOptional: isOptional, relatedResourceType: relatedResourceType);
   }
 }
