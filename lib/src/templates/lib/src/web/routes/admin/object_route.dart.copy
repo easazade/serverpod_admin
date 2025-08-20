@@ -88,13 +88,58 @@ class ObjectRoute extends WidgetRoute {
         return ViewObjectPage(resource: resource, id: id, object: object);
       } else if (action == 'edit') {
         final storageFiles = await listResources(session, 'CloudStorageEntry');
-        return EditObjectPage(resource: resource, id: id, object: object, storageFiles: storageFiles.toList());
+
+        final relatedOptions = await getRelatedObjectsBaseOnResourceMap(session, resource);
+
+        return EditObjectPage(
+          resource: resource,
+          id: id,
+          object: object,
+          storageFiles: storageFiles.toList(),
+          relatedOptions: relatedOptions,
+        );
       } else {
         return ErrorPage(session: session, error: 'Only allowed actions are $allowedActions');
       }
     } else {
       return ErrorPage(session: session, error: 'Only allowed actions are $allowedActions');
     }
+  }
+
+  Future<Map<String, List<Map<String, dynamic>>>> getRelatedObjectsBaseOnResourceMap(
+      Session session, String resource) async {
+    // Build options for related object selectors (one-to-one and one-to-many)
+    final relatedFieldsMap = (modelsMap[resource.toLowerCase()]['related_fields'] as Map<String, dynamic>);
+    final Set<String> relatedTypes = relatedFieldsMap.values
+        .map((v) => v.toString())
+        .map((type) {
+          final regex = RegExp(r'(?:List|Set)<\s*([^>]+?)\s*>\s*\??|^\s*([A-Za-z_]\w*)\s*\??\s*$');
+          final match = regex.firstMatch(type);
+          final captured = (match?.group(1) ?? match?.group(2))?.trim();
+          return (captured ?? '').toLowerCase();
+        })
+        .where((s) => s.isNotEmpty)
+        .toSet();
+
+    final Map<String, List<Map<String, dynamic>>> relatedOptions = {};
+    for (final typeLower in relatedTypes) {
+      try {
+        final rows = await listResources(session, typeLower);
+        final options = rows.map((row) {
+          final id = row['id']?.toString();
+          final label = (row['name']?.toString() ?? row['title']?.toString() ?? id ?? '').toString();
+          return {
+            'id': id ?? '',
+            'label': label,
+          };
+        }).toList();
+        relatedOptions[typeLower] = options;
+      } catch (_) {
+        relatedOptions[typeLower] = const [];
+      }
+    }
+
+    return relatedOptions;
   }
 }
 

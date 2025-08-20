@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
 import 'package:recase/recase.dart';
 import 'package:serverpod/serverpod.dart';
+import 'dart:convert';
 
 class ViewObjectPage extends Widget {
   String resource;
@@ -68,7 +69,7 @@ class ViewObjectPage extends Widget {
 
         // one to one relation
         'is_related_object': isRelatedObject,
-        if (isRelatedObject)
+        if (isRelatedObject && json['field_value'] != null)
           'view_related_object_url': '/admin/view/${json['field_type']}/${json['field_value']['id'].toString()}',
 
         // one to many relation

@@ -1,22 +1,25 @@
 // ignore_for_file: depend_on_referenced_packages
 
+import 'dart:convert';
+
+import 'package:collection/collection.dart';
 import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
 import 'package:recase/recase.dart';
 import 'package:serverpod/serverpod.dart';
-import 'package:collection/collection.dart';
-
 
 class EditObjectPage extends Widget {
   String resource;
   String? id;
   final Map<String, dynamic> object;
   final List<Map<String, dynamic>> storageFiles;
+  final Map<String, List<Map<String, dynamic>>> relatedOptions;
 
   EditObjectPage({
     required this.resource,
     required this.id,
     required this.object,
     required this.storageFiles,
+    this.relatedOptions = const {},
   }) : super(name: 'edit_object_page') {
     id = id.toString();
     resource = resource.toLowerCase();
@@ -49,6 +52,61 @@ class EditObjectPage extends Widget {
     }).map((objectField) {
       final json = <String, dynamic>{}..addAll(objectField);
 
+      final relatedFieldsMap = (modelsMap[resource.toLowerCase()]['related_fields'] as Map<String, dynamic>);
+      final isListType = json['field_type'].toString().startsWith('List');
+      final isRelatedObject = relatedFieldsMap.containsKey(json['field_name']) && !isListType;
+
+      final isRelatedObjectList = relatedFieldsMap.containsKey(json['field_name']) && isListType;
+
+      // extract the type of related object from field_type eg List<Person>? -> Person
+      final regex = RegExp(
+        r'(?:List|Set)<\s*([^>]+?)\s*>\s*\??|\bMap<\s*String\s*,\s*([^>]+?)\s*>\s*\??|^\s*([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\??)\s*$',
+      );
+
+      final match = regex.firstMatch(json['field_type'].toString())!;
+      final captured = (match.group(1) ?? match.group(2) ?? match.group(3))?.trim();
+      final relatedObjectType = captured?.isEmpty == true ? null : captured;
+      final String? relatedResource = (relatedObjectType == null) ? null : relatedObjectType.toString().toLowerCase();
+
+      // Prepare selected ids for relations
+      final String? relatedSelectedId = isRelatedObject ? ((json['field_value'] as Map?)?['id']?.toString()) : null;
+      final List<String> relatedSelectedIds = isRelatedObjectList
+          ? ((json['field_value'] as List?)?.map((e) => e['id']?.toString()).whereType<String>().toList() ?? <String>[])
+          : <String>[];
+
+      // Base options for this related type
+      final List<Map<String, dynamic>> baseRelatedOptions = (relatedResource != null)
+          ? (relatedOptions[relatedResource] ?? const <Map<String, dynamic>>[])
+          : const <Map<String, dynamic>>[];
+
+      // Single relation option list with selected markers
+      final List<Map<String, dynamic>> singleRelatedOptions = baseRelatedOptions
+          .map((o) => {
+                ...o,
+                'selected': relatedSelectedId != null && o['id']?.toString() == relatedSelectedId,
+              })
+          .toList();
+
+      // Related list items: one select per selected id (or one empty if none selected)
+      final List<Map<String, dynamic>> relatedListItems = isRelatedObjectList
+          ? (relatedSelectedIds.isNotEmpty
+              ? relatedSelectedIds
+                  .map((sid) => {
+                        'options': baseRelatedOptions
+                            .map((o) => {
+                                  ...o,
+                                  'selected': o['id']?.toString() == sid,
+                                })
+                            .toList(),
+                      })
+                  .toList()
+              : [
+                  {
+                    'options': baseRelatedOptions.map((o) => {...o, 'selected': false}).toList(),
+                  }
+                ])
+          : const <Map<String, dynamic>>[];
+
       json.addAll({
         'error': null,
         'has_value': json['field_value'] != null,
@@ -64,7 +122,8 @@ class EditObjectPage extends Widget {
         'BigInt': json['field_type'] == 'BigInt',
         'Vector': json['field_type'] == 'Vector',
 
-        'is_list': json['field_type'].toString().startsWith('List'),
+        // don't render generic list UI for related lists
+        'is_list': json['field_type'].toString().startsWith('List') && !isRelatedObjectList,
         'is_set': json['field_type'].toString().startsWith('Set'),
         'is_map': json['field_type'].toString().startsWith('Map'),
 
@@ -91,6 +150,15 @@ class EditObjectPage extends Widget {
         'is_map_string_num': json['field_type'].toString().startsWith('Map<String, num>'),
         'is_map_string_bool': json['field_type'].toString().startsWith('Map<String, bool>'),
         'is_map_string_uri': json['field_type'].toString().startsWith('Map<String, Uri>'),
+
+        'is_related_object': isRelatedObject,
+        'is_related_object_list': isRelatedObjectList,
+        'related_object_type': relatedObjectType,
+        if (isRelatedObject) 'related_selected_id': relatedSelectedId,
+        if (isRelatedObjectList) 'related_selected_ids': relatedSelectedIds,
+        // options for this specific related field
+        if (isRelatedObject) 'related_options': singleRelatedOptions,
+        if (isRelatedObjectList) 'related_list_items': relatedListItems,
 
         // since mustache cannot iterate maps like it does for lists, a simplified list of map entries is added.
         'map_entries': json['field_type'].toString().startsWith('Map') && json['field_value'] != null
@@ -122,6 +190,8 @@ class EditObjectPage extends Widget {
       "class": resource.pascalCase,
       "object_fields": objectFields,
       "storage_files": storageFiles,
+      // expose for JS add item helper
+      "related_options_json": jsonEncode(relatedOptions),
     };
   }
 }

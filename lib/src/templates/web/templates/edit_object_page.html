@@ -631,6 +631,19 @@
                                               {{#required}}required{{/required}}
                                               placeholder="Enter vector data (one value per line or comma-separated)...">{{field_value}}</textarea>
                                 {{/Vector}}
+                                
+                                {{#is_related_object}}
+                                    <select id="field_{{field_name}}" 
+                                            name="{{field_name}}" 
+                                            class="field-input field-select related-single-select"
+                                            {{#required}}required{{/required}}
+                                            data-related-type="{{related_object_type}}">
+                                        <option value="">None</option>
+                                        {{#related_options}}
+                                            <option value="{{id}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                                        {{/related_options}}
+                                    </select>
+                                {{/is_related_object}}
                                     
                                 {{#is_list}}
                                 <div class="collection-container" id="collection_{{field_name}}">
@@ -710,6 +723,28 @@
                                     <button type="button" class="collection-add-btn" onclick="addListItem('{{field_name}}', '{{& field_type}}')">Add Item</button>
                                 </div>
                                 {{/is_list}}
+
+                                {{#is_related_object_list}}
+                                <div class="collection-container" id="collection_{{field_name}}">
+                                    <div class="collection-label">Related {{related_object_type}} list:</div>
+                                    <div class="collection-items" id="list_items_{{field_name}}">
+                                        {{#related_list_items}}
+                                        <div class="collection-item">
+                                            <select class="collection-input-field list-field-input related-list-select"
+                                                    name="{{field_name}}"
+                                                    data-related-type="{{related_object_type}}">
+                                                <option value="">None</option>
+                                                {{#options}}
+                                                <option value="{{id}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                                                {{/options}}
+                                            </select>
+                                            <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
+                                        </div>
+                                        {{/related_list_items}}
+                                    </div>
+                                    <button type="button" class="collection-add-btn" onclick="addRelatedListItem('{{field_name}}', '{{related_object_type}}')">Add Item</button>
+                                </div>
+                                {{/is_related_object_list}}
 
                                 {{#is_set}}
                                 <div class="collection-container" id="collection_{{field_name}}">
@@ -1031,9 +1066,11 @@
             });
         }
 
+        const RELATED_OPTIONS = JSON.parse(`{{{related_options_json}}}`);
         document.addEventListener('DOMContentLoaded', () => {
             // Enhance URI inputs with custom suggestions dropdown
             initUriComboboxes();
+
             // 1) Select your form
             const form = document.getElementById('editForm'); 
             if (!form) return;  // nothing to do if it doesn't exist
@@ -1042,12 +1079,46 @@
             form.addEventListener('submit', async event => {
               console.log('trying to save object');
               event.preventDefault();  // stop the real submission
+              event.stopPropagation();
 
               const data = {};
               
+              // Handle Related single selects: replace with nested object
+              const relatedSingles = document.querySelectorAll('.related-single-select');
+              relatedSingles.forEach(sel => {
+                const fieldName = sel.name;
+                const id = sel.value || null;
+                const label = sel.options[sel.selectedIndex]?.text || null;
+                if (id) {
+                  const obj = { id };
+                  if (label) obj['name'] = label; // include a human label if available
+                  data[fieldName] = obj;
+                } else {
+                  data[fieldName] = null;
+                }
+              });
+
+              // Handle Related list selects: array of nested objects
+              const relatedListSelects = document.querySelectorAll('.related-list-select');
+              const relatedGrouped = {};
+              relatedListSelects.forEach(sel => {
+                const fieldName = sel.name;
+                if (!relatedGrouped[fieldName]) relatedGrouped[fieldName] = [];
+                const id = sel.value || '';
+                const label = sel.options[sel.selectedIndex]?.text || '';
+                if (id) {
+                  const obj = { id };
+                  if (label) obj['name'] = label;
+                  relatedGrouped[fieldName].push(obj);
+                }
+              });
+              Object.entries(relatedGrouped).forEach(([k, v]) => { data[k] = v; });
+
               // Handle List inputs with type conversion
               const listInputs = document.querySelectorAll('.list-field-input');
               listInputs.forEach(input => {
+                // Skip related list selects; they were handled above
+                if (input.classList.contains('related-list-select')) return;
                 if(data[input.name] == null){
                     data[input.name] = []
                 }
@@ -1094,8 +1165,8 @@
               inputs.forEach(input => {
                 // skip any without a name
                 if (!input.name) return;
-                // skip if already has a value assigned like List, Set, Map types which are handled above
-                if(data[input.name] != null) {
+                // skip if already handled above (even if the value is null)
+                if (Object.prototype.hasOwnProperty.call(data, input.name)) {
                     return;
                 } else if(input.type == 'checkbox'){
                     data[input.name] = input.checked
@@ -1408,6 +1479,27 @@
             container.appendChild(newItem);
             // Initialize URI combobox behavior for any newly added inputs
             try { initUriComboboxes(newItem); } catch (_) {}
+        }
+
+        function addRelatedListItem(fieldName, relatedType) {
+            const container = document.getElementById(`list_items_${fieldName}`);
+            const newItem = document.createElement('div');
+            newItem.className = 'collection-item';
+
+            // Pull options from server-provided JSON map
+            const options = RELATED_OPTIONS[(relatedType || '').toLowerCase()] || [];
+            const optsHtml = options.map(o => `<option value="${o.id}">${o.label}</option>`).join('');
+
+            newItem.innerHTML = `
+                <select class="collection-input-field list-field-input related-list-select"
+                        name="${fieldName}"
+                        data-related-type="${relatedType}">
+                    <option value="">Select ${relatedType}...</option>
+                    ${optsHtml}
+                </select>
+                <button type="button" class="collection-remove-btn" onclick="removeCollectionItem(this)">Remove</button>
+            `;
+            container.appendChild(newItem);
         }
 
         function addSetItem(fieldName, fieldType) {
