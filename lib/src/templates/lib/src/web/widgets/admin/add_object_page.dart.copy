@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
 import 'package:recase/recase.dart';
 import 'package:serverpod/serverpod.dart';
@@ -5,15 +7,18 @@ import 'package:serverpod/serverpod.dart';
 class AddObjectPage extends Widget {
   String resource;
   final List<Map<String, dynamic>> storageFiles;
+  final Map<String, List<Map<String, dynamic>>> relatedOptions;
 
   AddObjectPage({
     required this.resource,
     required this.storageFiles,
+    this.relatedOptions = const {},
   }) : super(name: 'add_object_page') {
     resource = resource.toLowerCase();
     // Generate object fields similar to ViewObjectPage
     print('resource: $resource');
     final Map<String, dynamic> schema = modelsMap[resource]['schema'];
+    final Map<String, dynamic> relatedFieldsMap = (modelsMap[resource]['related_fields'] as Map<String, dynamic>);
 
     final List<Map<String, dynamic>> objectFields = schema.entries.map((entry) {
       final fieldName = entry.key;
@@ -23,11 +28,59 @@ class AddObjectPage extends Widget {
       print(nonNullableFieldType);
       final isRequired = !fieldType.endsWith('?');
 
-      return <String, dynamic>{
+      // Detect related field metadata
+      final bool isListType = nonNullableFieldType.startsWith('List');
+      final bool isRelatedObject = relatedFieldsMap.containsKey(fieldName) && !isListType;
+      final bool isRelatedObjectList = relatedFieldsMap.containsKey(fieldName) && isListType;
+
+      // Extract related object type from field type
+      final regex = RegExp(
+        r'(?:List|Set)<\s*([^>]+?)\s*>\s*\??|\bMap<\s*String\s*,\s*([^>]+?)\s*>\s*\??|^\s*([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\??)\s*$',
+      );
+      final match = regex.firstMatch(nonNullableFieldType);
+      final captured = (match?.group(1) ?? match?.group(2) ?? match?.group(3))?.trim();
+      final String? relatedObjectType = (captured == null || captured.isEmpty) ? null : captured;
+      final String? relatedResource = (relatedObjectType == null) ? null : relatedObjectType.toLowerCase();
+
+      // Base options for this related type
+      final List<Map<String, dynamic>> baseRelatedOptions = (relatedResource != null)
+          ? (relatedOptions[relatedResource] ?? const <Map<String, dynamic>>[])
+          : const <Map<String, dynamic>>[];
+
+      // Single relation options without selection
+      final List<Map<String, dynamic>> singleRelatedOptions = baseRelatedOptions
+          .map((o) => {
+                ...o,
+                'selected': false,
+              })
+          .toList();
+
+      // Related list items: start with one empty select
+      final List<Map<String, dynamic>> relatedListItems = isRelatedObjectList
+          ? [
+              {
+                'options': baseRelatedOptions
+                    .map((o) => {
+                          ...o,
+                          'selected': false,
+                        })
+                    .toList(),
+              }
+            ]
+          : const <Map<String, dynamic>>[];
+
+      final fieldJson = <String, dynamic>{
         "field_name": fieldName,
         "field_type": nonNullableFieldType,
         "required": isRequired,
+        'is_related_object': isRelatedObject,
+        'is_related_object_list': isRelatedObjectList,
+        'related_object_type': relatedObjectType,
+        if (isRelatedObject) 'related_options': singleRelatedOptions,
+        if (isRelatedObjectList) 'related_list_items': relatedListItems,
       };
+
+      return fieldJson;
     }).map((objectField) {
       final json = <String, dynamic>{}..addAll(objectField);
 
@@ -45,7 +98,8 @@ class AddObjectPage extends Widget {
         'BigInt': json['field_type'] == 'BigInt',
         'Vector': json['field_type'] == 'Vector',
 
-        'is_list': json['field_type'].toString().startsWith('List'),
+        // Don't render generic list UI for related lists
+        'is_list': json['field_type'].toString().startsWith('List') && (json['is_related_object_list'] != true),
         'is_map': json['field_type'].toString().startsWith('Map'),
         'is_set': json['field_type'].toString().startsWith('Set'),
 
@@ -84,6 +138,8 @@ class AddObjectPage extends Widget {
       "resource": resource,
       "object_fields": objectFields,
       "storage_files": storageFiles,
+      // expose for JS add item helper
+      "related_options_json": jsonEncode(relatedOptions),
     };
   }
 }

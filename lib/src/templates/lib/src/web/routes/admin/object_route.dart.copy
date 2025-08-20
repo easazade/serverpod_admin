@@ -42,7 +42,8 @@ class ObjectRoute extends WidgetRoute {
 
     if (action == 'add') {
       final storageFiles = await listResources(session, 'CloudStorageEntry');
-      return AddObjectPage(resource: resource, storageFiles: storageFiles.toList());
+      final relatedOptions = await getRelatedObjectsBaseOnResourceMap(session, resource);
+      return AddObjectPage(resource: resource, storageFiles: storageFiles.toList(), relatedOptions: relatedOptions);
     } else if (action == 'delete' && id != null) {
       print('deleting $id redirecting :)');
       await deleteResource(session, resource, id);
