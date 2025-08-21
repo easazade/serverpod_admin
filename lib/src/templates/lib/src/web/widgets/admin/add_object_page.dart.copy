@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
+import 'package:demo_server/src/web/utils/admin/admin_utils.dart';
 import 'package:recase/recase.dart';
 import 'package:serverpod/serverpod.dart';
 
@@ -17,8 +17,16 @@ class AddObjectPage extends Widget {
     resource = resource.toLowerCase();
     // Generate object fields similar to ViewObjectPage
     print('resource: $resource');
-    final Map<String, dynamic> schema = modelsMap[resource]['schema'];
+    final Map<String, dynamic> schema = (modelsMap[resource]['schema'] as Map<String, dynamic>).copyMap();
     final Map<String, dynamic> relatedFieldsMap = (modelsMap[resource]['related_fields'] as Map<String, dynamic>);
+
+    // remove foreign keys if there is already a related object
+    // field for that foreign key to assign value to in add_object_page.html
+    for (var relatedField in relatedFieldsMap.entries) {
+      final name = relatedField.key;
+      final foreignKeyName = '${name}Id';
+      schema.removeWhere((fieldName, type) => fieldName == foreignKeyName);
+    }
 
     final List<Map<String, dynamic>> objectFields = schema.entries.map((entry) {
       final fieldName = entry.key;

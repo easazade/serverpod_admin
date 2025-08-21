@@ -55,6 +55,8 @@ class ObjectRoute extends WidgetRoute {
         final fieldName = entry.key;
         var fieldValue = entry.value;
         final fieldType = modelsMap[resource]['schema'][fieldName].toString();
+
+        // fixing incorrect value types like stringified number values or "" instead of null
         if (fieldValue == null || fieldValue == 'null') {
           return MapEntry(fieldName, null);
         } else if (fieldType.startsWith('int')) {
@@ -63,6 +65,8 @@ class ObjectRoute extends WidgetRoute {
           return MapEntry(fieldName, double.tryParse(fieldValue.toString()));
         } else if (fieldType.startsWith('bool')) {
           return MapEntry(fieldName, bool.tryParse(fieldValue.toString()));
+        } else if (fieldType == 'DateTime?' && fieldValue.toString().trim().isEmpty) {
+          return MapEntry(fieldName, null);
         }
 
         return MapEntry(fieldName, fieldValue);

@@ -178,6 +178,10 @@ class AdminUtilsGenerator extends FileGenerator {
     final isList = type.trim().startsWith('List<');
     final dynamic fieldValue = json[fieldName];
 
+    // fix stringified integer id if id type is integer.
+    // if id type is a uuid, nothing will be changed.
+    fieldValue['id'] = int.tryParse(fieldValue['id'].toString()) ?? fieldValue['id'];
+
     if (isList) {
       if (fieldValue is List) {
         final ids = fieldValue.whereType<Map>().map((m) => m['id']).where((v) => v != null).toList();
@@ -196,7 +200,7 @@ class AdminUtilsGenerator extends FileGenerator {
       if (fieldValue is Map && fieldValue['id'] != null) {
         final schema = (modelsMap[resource.toLowerCase()]['schema'] as Map<String, dynamic>);
         if (schema.containsKey(foreignKeyName)) {
-          json[foreignKeyName] = fieldValue['id'].toString();
+          json[foreignKeyName] = fieldValue['id'];
           // prevent fromJson from requiring full object
           json[fieldName] = null;
         }
@@ -360,6 +364,12 @@ class AdminUtilsGenerator extends FileGenerator {
       pod.webServer.addRoute(UploadRoute(), '/admin/upload-file');
     ''');
     buffer.writeln('}'); // appendAdminRoutes() end
+
+    buffer.writeln('''
+    extension CopyMap<K, V> on Map<K,V> {
+      Map<K,V> copyMap() => <K,V>{}..addAll(this);
+     }
+    ''');
 
     return buffer.toString();
   }
