@@ -42,6 +42,15 @@ class ParsedField {
       return segments;
     }
 
+    // Helper to strip a leading module qualifier: module:<moduleName>:<Type>
+    String stripLeadingModuleQualifier(String typeStr) {
+      final match = RegExp(r'^\s*module:[^:]+:(.+)$').firstMatch(typeStr);
+      if (match != null) {
+        return match.group(1)!.trim();
+      }
+      return typeStr;
+    }
+
     // Split remainder into segments: first is the type, rest are meta entries
     final parts = splitTopLevel(typeAndProperties).map((s) => s.trim()).toList();
     if (parts.isEmpty) {
@@ -50,6 +59,7 @@ class ParsedField {
 
     // Determine nullability
     final rawType = parts.first;
+    final normalizedType = stripLeadingModuleQualifier(rawType);
 
     // Collect meta entries and detect relation
     final meta = <String>[];
@@ -65,17 +75,18 @@ class ParsedField {
           r'(?:List|Set)<\s*([^>]+?)\s*>\s*\??|\bMap<\s*String\s*,\s*([^>]+?)\s*>\s*\??|^\s*([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\??)\s*$',
         );
 
-        final match = regex.firstMatch(rawType);
+        final match = regex.firstMatch(normalizedType);
         final captured = (match?.group(1) ?? match?.group(2) ?? match?.group(3))?.trim();
+        final capturedNormalized = captured == null ? null : stripLeadingModuleQualifier(captured);
         String? relatedObjectType;
-        if (captured != null && !captured.startsWith('int') && !captured.startsWith('UuidValue')) {
-          relatedObjectType = captured;
+        if (capturedNormalized != null && !capturedNormalized.startsWith('int') && !capturedNormalized.startsWith('UuidValue')) {
+          relatedObjectType = capturedNormalized;
         }
 
         relation = Relation.parse(raw: part, relatedResourceType: relatedObjectType);
       }
     }
 
-    return ParsedField(name: name, type: rawType, meta: meta, relation: relation);
+    return ParsedField(name: name, type: normalizedType, meta: meta, relation: relation);
   }
 }

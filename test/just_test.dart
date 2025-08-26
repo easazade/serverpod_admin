@@ -1,4 +1,3 @@
-
 import 'package:serverpod_admin/src/utils/parsed_field.dart';
 
 void main() {
@@ -16,8 +15,16 @@ void main() {
     'companyId: int, relation(name=company_employees, parent=company)',
   ];
 
-  for (var ex in examples) {
-    final [name, typeAndMeta] = ex.split(':');
+  final newPatterns = [
+    'userInfo: module:auth:UserInfo?, relation',
+    'purchasedItem: module:shopping:Product?, relation',
+    'userImage: module:gallery:Photo?, relation',
+  ];
+
+  for (var ex in [...examples, ...newPatterns]) {
+    final index = ex.indexOf(':');
+    final name = ex.substring(0, index);
+    final typeAndMeta = ex.substring(index + 1);
     final parsed = ParsedField.from(name: name, typeAndProperties: typeAndMeta);
     print(parsed);
   }
