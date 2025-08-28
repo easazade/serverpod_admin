@@ -17,6 +17,7 @@ void main(List<String> args) async {
   final serverpodEntities = readResult.entities;
   final serverpodModuleImports = readResult.moduleImports;
 
+  print("\x1B[32m${'Processing serverpod models:'}\x1B[0m");
   for (var entity in serverpodEntities) {
     print('-> ${entity.name}: ${entity.type}');
   }

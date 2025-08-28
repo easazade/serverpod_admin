@@ -16,7 +16,6 @@ class AddObjectPage extends Widget {
   }) : super(name: 'add_object_page') {
     resource = resource.toLowerCase();
     // Generate object fields similar to ViewObjectPage
-    print('resource: $resource');
     final Map<String, dynamic> schema = (modelsMap[resource]['schema'] as Map<String, dynamic>).copyMap();
     final Map<String, dynamic> relatedFieldsMap = (modelsMap[resource]['related_fields'] as Map<String, dynamic>);
 

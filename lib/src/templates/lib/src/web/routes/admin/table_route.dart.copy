@@ -37,7 +37,6 @@ class TableRoute extends WidgetRoute {
         final jsonString = await utf8.decoder.bind(request).join();
         final Map<String, dynamic> jsonBody = jsonDecode(jsonString);
         final List deleteIds = jsonBody["delete_ids"];
-        print('deleting $resource objects with ids: $deleteIds');
 
         for (final id in deleteIds) {
           await deleteResource(session, resource, id);

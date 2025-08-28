@@ -38,14 +38,12 @@ class ObjectRoute extends WidgetRoute {
       return PageNotFound();
     }
 
-    print('Start to do action($action) on $resource with $id');
 
     if (action == 'add') {
       final storageFiles = await listResources(session, 'CloudStorageEntry');
       final relatedOptions = await getRelatedObjectsBaseOnResourceMap(session, resource);
       return AddObjectPage(resource: resource, storageFiles: storageFiles.toList(), relatedOptions: relatedOptions);
     } else if (action == 'delete' && id != null) {
-      print('deleting $id redirecting :)');
       await deleteResource(session, resource, id);
       return WidgetRedirect(url: '/admin/list/$resource');
     } else if (action == 'save') {

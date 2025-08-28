@@ -69,8 +69,6 @@ class ParsedField {
       if (part.isEmpty) continue;
       meta.add(part);
       if (part.startsWith('relation')) {
-        print(part);
-
         final regex = RegExp(
           r'(?:List|Set)<\s*([^>]+?)\s*>\s*\??|\bMap<\s*String\s*,\s*([^>]+?)\s*>\s*\??|^\s*([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\??)\s*$',
         );

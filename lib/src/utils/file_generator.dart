@@ -11,7 +11,6 @@ abstract class FileGenerator {
   Future<String> fileContent();
 
   Future<void> createFile() async {
-    print('Generating and creating file: $path');
     final content = await fileContent();
     final file = File(path);
     if (!file.existsSync()) {

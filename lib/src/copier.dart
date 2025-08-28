@@ -30,7 +30,15 @@ class Copier {
     }
 
     final entities = await sourceDir.list(recursive: true, followLinks: false).toList();
+
+    print("\x1B[32m${'Copying template files:'}\x1B[0m");
     for (final entity in entities) {
+      final fileName = entity.path.split('/').last;
+      // if file is private like .DS_Store, there is no need to copy it over
+      if (fileName.startsWith('.')) {
+        continue;
+      }
+
       if (entity is! File) continue;
 
       final String relativePath = _relativePath(entity.path, sourceDir.path);

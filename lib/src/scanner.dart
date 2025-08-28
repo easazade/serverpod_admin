@@ -47,14 +47,10 @@ class ServerpodScanner {
       spyFiles.addAll(files);
     }
 
-    for (var spyFile in spyFiles) {
-      print(spyFile.path);
-    }
 
     final jsonEntities = await Future.wait(spyFiles.map((file) => readJsonOrYamlFile(file)).toList());
 
     for (var json in jsonEntities) {
-      print(json["class"]);
       if (json.containsKey('enum')) {
         entities.add(ServerpodEnum.fromJson(json));
       } else if (json.containsKey('class')) {
@@ -86,7 +82,6 @@ Future<List<ModuleInfo>> getServerpodModulesDirectories(String serverPath) async
   List<ModuleInfo> moduleInfos = [];
 
   for (var package in serverpodPackages) {
-    print(package.key);
     final name = package.key;
     final source = package.value["source"];
     final version = package.value["version"];
