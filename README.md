@@ -2,6 +2,13 @@
 
 Administration panel for [serverpod](https://serverpod.dev) backend
 
+# Screenshots
+Here are some screenshots of the admin panel
+
+<img src="screenshots/1.png">
+<img src="screenshots/2.png">
+<img src="screenshots/3.png">
+
 # Get started
 
 Add the library to dev dependencies
