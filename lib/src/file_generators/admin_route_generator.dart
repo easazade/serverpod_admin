@@ -41,7 +41,7 @@ class AdminRouteGenerator extends FileGenerator {
     buffer.writeln('''
       @override
       Future<AbstractWidget> build(Session session, HttpRequest request) async {
-        final classNames = modelsMap.values.map((e) => e["class"].toString()).toList();
+        final classNames = modelsMap.values.where((e) => e.containsKey('class')).map((e) => e["class"].toString()).toList();
 
         Map<String, int> objectCount = {};
         for (var className in classNames) {

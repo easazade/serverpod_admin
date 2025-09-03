@@ -33,12 +33,18 @@ class AddObjectPage extends Widget {
       print(fieldType);
       final nonNullableFieldType = fieldType.replaceAll('?', '');
       print(nonNullableFieldType);
-      final isRequired = !fieldType.endsWith('?');
+      var isRequired = !fieldType.endsWith('?');
 
       // Detect related field metadata
       final bool isListType = nonNullableFieldType.startsWith('List');
       final bool isRelatedObject = relatedFieldsMap.containsKey(fieldName) && !isListType;
       final bool isRelatedObjectList = relatedFieldsMap.containsKey(fieldName) && isListType;
+
+      // if field is a related field the nullability should be checked from the type specified for this field in the related_fields section of the [modelsMap] 
+      if (isRelatedObject) {
+        final relatedFieldType = relatedFieldsMap[fieldName].toString();
+        isRequired = !relatedFieldType.endsWith('?');
+      }
 
       // Extract related object type from field type
       final regex = RegExp(

@@ -70,45 +70,64 @@ class AdminUtilsGenerator extends FileGenerator {
 
     buffer.writeln('final modelsMap = <String, dynamic>{'); // map of models start
     final classes = entities.whereClassWithTables();
+    final enums = entities.whereType<ServerpodEnum>().toList();
     final classNames = classes.map((e) => e.name).toList();
 
-    for (var entity in classes) {
-      if (entity.fields.firstWhereOrNull((field) => field.name == 'id') == null) {
-        entity.fields.insert(0, ParsedField(name: 'id', type: 'int?', meta: ['defaultPersist=serial'], relation: null));
-      }
+    for (var entity in [...enums, ...classes]) {
+      if (entity is ServerpodClass) {
+        if (entity.fields.firstWhereOrNull((field) => field.name == 'id') == null) {
+          entity.fields.insert(0, ParsedField(name: 'id', type: 'int?', meta: ['defaultPersist=serial'], relation: null));
+        }
 
-      final schema =
-          '''
+        final schema =
+            '''
             {${entity.fields.toList().map((parsedField) {
-            var typeMapping = ' "${parsedField.name}": "${parsedField.type}" ';
+              var typeMapping = ' "${parsedField.name}": "${parsedField.type}" ';
 
-            final nonNullableFieldType = parsedField.type.replaceAll('?', '');
-            if (classNames.contains(nonNullableFieldType) && parsedField.relation?.field == null) {
-              final foreignKeyFieldName = '${parsedField.name.camelCase}Id';
+              final nonNullableFieldType = parsedField.type.replaceAll('?', '');
+              if (classNames.contains(nonNullableFieldType) && parsedField.relation?.field == null) {
+                final foreignKeyFieldName = '${parsedField.name.camelCase}Id';
 
-              final relatedClassEntity = classes.firstWhereOrNull((e) => e.name == parsedField.type.replaceAll('?', ''));
-              final idTypeOfRelatedClass = relatedClassEntity?.fields.firstWhereOrNull((field) => field.name == 'id')?.type.replaceAll('?', '') ?? 'int';
+                final relatedClassEntity = classes.firstWhereOrNull((e) => e.name == parsedField.type.replaceAll('?', ''));
+                final idTypeOfRelatedClass = relatedClassEntity?.fields.firstWhereOrNull((field) => field.name == 'id')?.type.replaceAll('?', '') ?? 'int';
 
-              final foreignKeyFieldType = parsedField.relation?.isOptional == true ? "$idTypeOfRelatedClass?" : idTypeOfRelatedClass;
+                final foreignKeyFieldType = parsedField.relation?.isOptional == true ? "$idTypeOfRelatedClass?" : idTypeOfRelatedClass;
 
-              return '$typeMapping, "$foreignKeyFieldName": "$foreignKeyFieldType"';
-            }
+                return '$typeMapping, "$foreignKeyFieldName": "$foreignKeyFieldType"';
+              }
 
-            return typeMapping;
-          }).join(',')}}
+              return typeMapping;
+            }).join(',')}}
           ''';
 
-      // in the schema section below there is a relation defined on the class type. it is required to add a the field for
-      // foreign id to the schema as well.
-      buffer.writeln('''
+        // in the schema section below there is a relation defined on the class type. it is required to add a the field for
+        // foreign id to the schema as well.
+        buffer.writeln('''
         "${entity.name.toLowerCase()}": {
           "table": "${entity.table != null ? "${entity.table}" : "null"}", 
           "class": "${entity.name}",
+          "name": "${entity.name}",
           "columns": [${entity.fields.map((e) => e.name).toList().map((e) => '"$e"').join(',')}],
           "schema": $schema,
-          "related_fields": <String, dynamic>{${entity.fields.where((e) => e.relation != null && e.relation?.parent == null).map((e) => '"${e.name}": "${e.type}"').join(',')}},
+          "related_fields": <String, dynamic>{${entity.fields.where((e) => e.relation != null && e.relation?.parent == null).map((e) {
+          var typeWithNullability = e.type.replaceAll('?', '');
+          if (e.relation?.isOptional == true) {
+            typeWithNullability = '$typeWithNullability?';
+          }
+          return '"${e.name}": "$typeWithNullability"';
+        }).join(',')}},
         },
       ''');
+      } else if (entity is ServerpodEnum) {
+        buffer.write('''
+          "${entity.name.toLowerCase()}": {
+            "enum": "${entity.name}",
+            "name": "${entity.name}",
+            "serialized": "${entity.serialized == 'null' ? 'byIndex' : entity.serialized}",
+            "values": [${entity.values.map((enumValue) => '"$enumValue"').join(',')}],
+          },
+        ''');
+      }
     }
     buffer.writeln('};'); // map of models end
 
@@ -166,54 +185,54 @@ class AdminUtilsGenerator extends FileGenerator {
     buffer.writeln('}');
 
     buffer.writeln('''
-  // Pre-process related fields to support id-only payloads
-  final Map<String, dynamic> relatedFieldsMap =
-      (modelsMap[resource.toLowerCase()]['related_fields'] as Map<String, dynamic>);
-  // Keep ids for list relations to attach after row is saved
-  final Map<String, List<dynamic>> relatedListIds = {};
+      // Pre-process related fields to support id-only payloads
+      final Map<String, dynamic> relatedFieldsMap =
+          (modelsMap[resource.toLowerCase()]['related_fields'] as Map<String, dynamic>);
+      // Keep ids for list relations to attach after row is saved
+      final Map<String, List<dynamic>> relatedListIds = {};
 
-  for (final entry in relatedFieldsMap.entries) {
-    final fieldName = entry.key;
-    final type = entry.value.toString();
-    final isList = type.trim().startsWith('List<');
-    final dynamic fieldValue = json[fieldName];
+      for (final entry in relatedFieldsMap.entries) {
+        final fieldName = entry.key;
+        final type = entry.value.toString();
+        final isList = type.trim().startsWith('List<');
+        final dynamic fieldValue = json[fieldName];
 
-    // fix stringified integer id if id type is integer.
-    // if id type is a uuid, nothing will be changed.
-    fieldValue['id'] = int.tryParse(fieldValue['id'].toString()) ?? fieldValue['id'];
+        if (isList) {
+          if (fieldValue is List) {
+            final ids = fieldValue.whereType<Map>().map((m) => m['id']).where((v) => v != null).toList();
+            if (ids.isNotEmpty) {
+              relatedListIds[fieldName] = ids;
+              // prevent fromJson from requiring full objects
+              json[fieldName] = null;
+            }
+          } else if (fieldValue == null) {
+            // Explicitly send empty to indicate clearing the relation list
+            relatedListIds[fieldName] = <dynamic>[];
+            json[fieldName] = null;
+          }
+        } else {
+          final foreignKeyName = '\${fieldName}Id';
+          if (fieldValue is Map && fieldValue['id'] != null) {
+            // fix stringified integer id if id type is integer.
+            // if id type is a uuid, nothing will be changed.
+            fieldValue['id'] = int.tryParse(fieldValue['id'].toString()) ?? fieldValue['id'];
 
-    if (isList) {
-      if (fieldValue is List) {
-        final ids = fieldValue.whereType<Map>().map((m) => m['id']).where((v) => v != null).toList();
-        if (ids.isNotEmpty) {
-          relatedListIds[fieldName] = ids;
-          // prevent fromJson from requiring full objects
-          json[fieldName] = null;
+            final schema = (modelsMap[resource.toLowerCase()]['schema'] as Map<String, dynamic>);
+            if (schema.containsKey(foreignKeyName)) {
+              json[foreignKeyName] = fieldValue['id'];
+              // prevent fromJson from requiring full object
+              json[fieldName] = null;
+            }
+          } else if (fieldValue == null) {
+            // Null selection for single relation -> clear FK if present in schema
+            final schema = (modelsMap[resource.toLowerCase()]['schema'] as Map<String, dynamic>);
+            if (schema.containsKey(foreignKeyName)) {
+              json[foreignKeyName] = null;
+            }
+          }
         }
-      } else if (fieldValue == null) {
-        // Explicitly send empty to indicate clearing the relation list
-        relatedListIds[fieldName] = <dynamic>[];
-        json[fieldName] = null;
       }
-    } else {
-      final foreignKeyName = '\${fieldName}Id';
-      if (fieldValue is Map && fieldValue['id'] != null) {
-        final schema = (modelsMap[resource.toLowerCase()]['schema'] as Map<String, dynamic>);
-        if (schema.containsKey(foreignKeyName)) {
-          json[foreignKeyName] = fieldValue['id'];
-          // prevent fromJson from requiring full object
-          json[fieldName] = null;
-        }
-      } else if (fieldValue == null) {
-        // Null selection for single relation -> clear FK if present in schema
-        final schema = (modelsMap[resource.toLowerCase()]['schema'] as Map<String, dynamic>);
-        if (schema.containsKey(foreignKeyName)) {
-          json[foreignKeyName] = null;
-        }
-      }
-    }
-  }
-''');
+    ''');
 
     for (final entity in classes) {
       buffer.writeln('if(resource.toLowerCase() == "${entity.name.toLowerCase()}"){');

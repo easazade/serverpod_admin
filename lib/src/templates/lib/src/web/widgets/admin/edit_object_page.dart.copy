@@ -58,6 +58,13 @@ class EditObjectPage extends Widget {
 
       final isRelatedObjectList = relatedFieldsMap.containsKey(json['field_name']) && isListType;
 
+      // if field is a related field the nullability should be checked from the type specified for this field 
+      // in the related_fields section of the [modelsMap]
+      if (isRelatedObject) {
+        final relatedFieldType = relatedFieldsMap[json['field_name']].toString();
+        json['required'] = !relatedFieldType.endsWith('?');
+      }
+
       // extract the type of related object from field_type eg List<Person>? -> Person
       final regex = RegExp(
         r'(?:List|Set)<\s*([^>]+?)\s*>\s*\??|\bMap<\s*String\s*,\s*([^>]+?)\s*>\s*\??|^\s*([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*\??)\s*$',
