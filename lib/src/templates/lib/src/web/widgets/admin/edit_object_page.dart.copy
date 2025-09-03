@@ -3,7 +3,7 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
-import 'package:{{server_package_name}}/src/web/utils/admin/admin_utils.dart';
+import 'package:demo_server/src/web/utils/admin/admin_utils.dart';
 import 'package:recase/recase.dart';
 import 'package:serverpod/serverpod.dart';
 
@@ -52,18 +52,32 @@ class EditObjectPage extends Widget {
     }).map((objectField) {
       final json = <String, dynamic>{}..addAll(objectField);
 
+      final nonNullableFieldType = json['field_type'].toString().replaceAll('?', '');
       final relatedFieldsMap = (modelsMap[resource.toLowerCase()]['related_fields'] as Map<String, dynamic>);
       final isListType = json['field_type'].toString().startsWith('List');
       final isRelatedObject = relatedFieldsMap.containsKey(json['field_name']) && !isListType;
 
       final isRelatedObjectList = relatedFieldsMap.containsKey(json['field_name']) && isListType;
 
-      // if field is a related field the nullability should be checked from the type specified for this field 
+      // if field is a related field the nullability should be checked from the type specified for this field
       // in the related_fields section of the [modelsMap]
       if (isRelatedObject) {
         final relatedFieldType = relatedFieldsMap[json['field_name']].toString();
         json['required'] = !relatedFieldType.endsWith('?');
       }
+
+      // checking if field is enum and add required variables to mustache payload
+      final allEnumModels = modelsMap.entries.where((entry) {
+        return entry.value['enum'] != null;
+      });
+
+      final enumModelForCurrentField = allEnumModels.firstElementWhereOrNull((entry) {
+        final enumType = entry.value['enum'];
+        return enumType == nonNullableFieldType;
+      });
+
+      final isEnum = enumModelForCurrentField != null;
+      final enumOptions = enumModelForCurrentField?.value['values'] as List? ?? [];
 
       // extract the type of related object from field_type eg List<Person>? -> Person
       final regex = RegExp(
@@ -157,6 +171,9 @@ class EditObjectPage extends Widget {
         'is_map_string_num': json['field_type'].toString().startsWith('Map<String, num>'),
         'is_map_string_bool': json['field_type'].toString().startsWith('Map<String, bool>'),
         'is_map_string_uri': json['field_type'].toString().startsWith('Map<String, Uri>'),
+
+        'is_enum': isEnum,
+        if (isEnum) 'enum_options': enumOptions,
 
         'is_related_object': isRelatedObject,
         'is_related_object_list': isRelatedObjectList,

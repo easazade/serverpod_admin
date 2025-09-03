@@ -478,8 +478,6 @@
                 <span style="color: #6c757d; margin: 0 8px;">/</span>
                 <a href="{{table_url}}" style="color: #007bff; text-decoration: none;">{{class}}</a>
                 <span style="color: #6c757d; margin: 0 8px;">/</span>
-                <!-- <a href="{{view_url}}" style="color: #007bff; text-decoration: none;">View</a> -->
-                <span style="color: #6c757d; margin: 0 8px;">/</span>
                 <span style="color: #6c757d;">Edit</span>
             </div>
 
@@ -623,6 +621,19 @@
                                            placeholder="Enter big integer...">
                                 {{/BigInt}}
                                 
+                                {{#is_enum}}
+                                    <select id="field_{{field_name}}"
+                                            name="{{field_name}}"
+                                            class="field-input field-select enum-single-select"
+                                            data-initial-value="{{field_value}}"
+                                            {{#required}}required{{/required}}>
+                                        {{^required}}<option value="">None</option>{{/required}}
+                                        {{#enum_options}}
+                                            <option value="{{.}}">{{.}}</option>
+                                        {{/enum_options}}
+                                    </select>
+                                {{/is_enum}}
+
                                 {{#Vector}}
                                     <textarea id="field_{{field_name}}" 
                                               name="{{field_name}}" 
@@ -1070,6 +1081,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Enhance URI inputs with custom suggestions dropdown
             initUriComboboxes();
+            // Initialize enum selects with initial values
+            document.querySelectorAll('.enum-single-select').forEach(sel => {
+                const initial = sel.getAttribute('data-initial-value') ?? '';
+                if (initial) sel.value = initial;
+            });
 
             // 1) Select your form
             const form = document.getElementById('editForm'); 
@@ -1113,6 +1129,14 @@
                 }
               });
               Object.entries(relatedGrouped).forEach(([k, v]) => { data[k] = v; });
+
+              // Handle Enum single selects: empty -> null, else selected string
+              const enumSingles = document.querySelectorAll('.enum-single-select');
+              enumSingles.forEach(sel => {
+                const fieldName = sel.name;
+                const value = sel.value || null;
+                data[fieldName] = value;
+              });
 
               // Handle List inputs with type conversion
               const listInputs = document.querySelectorAll('.list-field-input');
