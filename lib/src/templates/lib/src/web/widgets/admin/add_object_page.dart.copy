@@ -40,7 +40,20 @@ class AddObjectPage extends Widget {
       final bool isRelatedObject = relatedFieldsMap.containsKey(fieldName) && !isListType;
       final bool isRelatedObjectList = relatedFieldsMap.containsKey(fieldName) && isListType;
 
-      // if field is a related field the nullability should be checked from the type specified for this field in the related_fields section of the [modelsMap] 
+      final allEnumModels = modelsMap.entries.where((entry) {
+        return entry.value['enum'] != null;
+      });
+
+      final enumModelForCurrentField = allEnumModels.firstElementWhereOrNull((entry) {
+        final enumType = entry.value['enum'];
+        return enumType == nonNullableFieldType;
+      });
+
+      final isEnum = enumModelForCurrentField != null;
+
+      final enumOptions = enumModelForCurrentField?.value['values'] as List? ?? [];
+
+      // if field is a related field the nullability should be checked from the type specified for this field in the related_fields section of the [modelsMap]
       if (isRelatedObject) {
         final relatedFieldType = relatedFieldsMap[fieldName].toString();
         isRequired = !relatedFieldType.endsWith('?');
@@ -89,8 +102,10 @@ class AddObjectPage extends Widget {
         'is_related_object': isRelatedObject,
         'is_related_object_list': isRelatedObjectList,
         'related_object_type': relatedObjectType,
+        'is_enum': isEnum,
         if (isRelatedObject) 'related_options': singleRelatedOptions,
         if (isRelatedObjectList) 'related_list_items': relatedListItems,
+        if(isEnum) 'enum_options': enumOptions,
       };
 
       return fieldJson;

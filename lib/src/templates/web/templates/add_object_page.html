@@ -596,6 +596,18 @@
                                            placeholder="Enter big integer...">
                                 {{/BigInt}}
 
+                                {{#is_enum}}
+                                    <select id="field_{{field_name}}"
+                                            name="{{field_name}}"
+                                            class="field-input field-select enum-single-select"
+                                            {{#required}}required{{/required}}>
+                                        {{^required}}<option value="">None</option>{{/required}}
+                                        {{#enum_options}}
+                                            <option value="{{.}}">{{.}}</option>
+                                        {{/enum_options}}
+                                    </select>
+                                {{/is_enum}}
+
                                 {{#is_related_object}}
                                     <select id="field_{{field_name}}" 
                                             name="{{field_name}}" 
@@ -1053,6 +1065,14 @@
                 }
               });
               Object.entries(relatedGrouped).forEach(([k, v]) => { data[k] = v; });
+
+              // Handle Enum single selects: empty -> null, else selected string
+              const enumSingles = document.querySelectorAll('.enum-single-select');
+              enumSingles.forEach(sel => {
+                const fieldName = sel.name;
+                const value = sel.value || null;
+                data[fieldName] = value;
+              });
 
               // Handle List inputs with type conversion
               const listInputs = document.querySelectorAll('.list-field-input');

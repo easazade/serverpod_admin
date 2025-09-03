@@ -384,10 +384,23 @@ class AdminUtilsGenerator extends FileGenerator {
     ''');
     buffer.writeln('}'); // appendAdminRoutes() end
 
+    // add extensions
     buffer.writeln('''
     extension CopyMap<K, V> on Map<K,V> {
       Map<K,V> copyMap() => <K,V>{}..addAll(this);
      }
+    ''');
+
+    buffer.writeln('''
+    extension IterableX<T> on Iterable<T>{
+        /// The first element satisfying [test], or `null` if there are none.
+        T? firstElementWhereOrNull(bool Function(T element) test) {
+          for (var element in this) {
+            if (test(element)) return element;
+          }
+          return null;
+        }
+    } 
     ''');
 
     return buffer.toString();
